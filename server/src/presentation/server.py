@@ -28,6 +28,7 @@ if TYPE_CHECKING:
 def setup_logging(*, debug: bool = False) -> None:
     log_level = logging.DEBUG if debug else logging.INFO
     log_path = Path(__file__).resolve().parent.parent.parent / "logs" / "ncad-mcp-python.log"
+    log_path.parent.mkdir(parents=True, exist_ok=True)
     logging.basicConfig(
         level=log_level,
         format="%(asctime)s [%(levelname)s] %(name)s: %(message)s",
@@ -60,6 +61,7 @@ log = structlog.get_logger()
 # -- Global State (contextvars) -------------------------------------------------
 
 _routing_cache: object = None
+_tool_cache: dict[str, list[Tool]] = {}
 
 
 def _ensure_connected() -> None:
@@ -76,9 +78,10 @@ def _ensure_connected() -> None:
                 getattr(repo, "connection_mode", "unknown"),
             )
 
-    # Invalidate routing cache on reconnection
+    # Invalidate caches on reconnection
     global _routing_cache
     _routing_cache = None
+    _tool_cache.clear()
 
 
 # -- Tool Definitions ----------------------------------------------------------
@@ -92,15 +95,17 @@ _MODE_ORDER: Final[dict[str, int]] = {
 
 
 def _get_tools(mode: str = "full") -> list[Tool]:
-    """Return MCP tool definitions filtered by connection mode.
+    """Return MCP tool definitions filtered by connection mode (cached).
 
     Each tool definition has a ``requires_mode`` field:
       ``None`` / missing — always available (no CAD needed)
       ``"com"`` — requires at least COM bridge
       ``"full"`` — requires .NET engine (HTTP bridge)
     """
+    if mode in _tool_cache:
+        return _tool_cache[mode]
     required = _MODE_ORDER.get(mode, 0)
-    return [
+    tools = [
         Tool(
             name=td["name"],
             description=td["description"],
@@ -113,6 +118,8 @@ def _get_tools(mode: str = "full") -> list[Tool]:
         for td in TOOL_DEFS
         if _MODE_ORDER.get(td.get("requires_mode", "full"), 0) <= required
     ]
+    _tool_cache[mode] = tools
+    return tools
 
 
 # -- Routing -------------------------------------------------------------------
@@ -215,6 +222,7 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "set_3d_view": ("solid", "set_3d_view"),
     "get_solid_properties": ("solid", "get_solid_properties"),
     "move_solid": ("solid", "move_solid"),
+    "rotate_solid": ("solid", "rotate_solid"),
     # Symbols
     "create_roughness": ("symbol", "create_roughness"),
     "create_old_roughness": ("symbol", "create_old_roughness"),
@@ -304,11 +312,20 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "create_profile": ("feature", "create_profile"),
     "create_extrude_feature": ("feature", "create_extrude_feature"),
     "create_revolve_feature": ("feature", "create_revolve_feature"),
+
+    # ── Feature Tree Management (Phase P2) ──
+    "get_feature_list": ("feature", "get_feature_list"),
+    "suppress_feature": ("feature", "suppress_feature"),
+    "unsuppress_feature": ("feature", "unsuppress_feature"),
+    "edit_feature_parameter": ("feature", "edit_feature_parameter"),
+    "delete_feature": ("feature", "delete_feature"),
+
     # Mesh / Viewport / Render
     "create_mesh": ("entity", "create_mesh"),
     "edit_mesh": ("entity", "edit_mesh"),
     "set_viewport": ("entity", "set_viewport"),
     "render": ("entity", "render"),
+    "screenshot": ("document", "screenshot"),
     # NURBS / IFC
     "create_nurb_curve": ("nurb_ifc", "create_nurb_curve"),
     "create_nurb_surface": ("nurb_ifc", "create_nurb_surface"),
@@ -328,6 +345,30 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "stop_motion_preview": ("multicad", "stop_motion_preview"),
     "create_body_contour": ("multicad", "create_body_contour"),
     "check_3d_faces": ("multicad", "check_3d_faces"),
+
+    # ── Parametric Design (server-side, no CAD needed) ──
+    "set_parameter": ("parameter", "set_parameter"),
+    "get_parameter": ("parameter", "get_parameter"),
+    "list_parameters": ("parameter", "list_parameters"),
+    "delete_parameter": ("parameter", "delete_parameter"),
+    "clear_parameters": ("parameter", "clear_parameters"),
+    "evaluate_expression": ("parameter", "evaluate_expression"),
+    "resolve_value": ("parameter", "resolve_value"),
+    "load_design_table": ("parameter", "load_design_table"),
+    "apply_design_row": ("parameter", "apply_design_row"),
+
+    # ── History / Model Regeneration (server-side, no CAD needed) ──
+    "record_tool_call": ("history", "record_tool_call"),
+    "get_history": ("history", "get_history"),
+    "delete_history_entry": ("history", "delete_entry"),
+    "clear_history": ("history", "clear_history"),
+    # replay_history is handled separately in _build_routing()
+
+    # ── Configuration Management (server-side, no CAD needed) ──
+    "save_configuration": ("parameter", "save_configuration"),
+    "load_configuration": ("parameter", "load_configuration"),
+    "list_configurations": ("parameter", "list_configurations"),
+    "delete_configuration": ("parameter", "delete_configuration"),
 }
 
 
@@ -347,18 +388,30 @@ def _build_routing() -> dict[str, Callable[..., Any]]:
         if handler is not None:
             routing[tool_name] = handler
 
+    # ── Special: replay_history needs a dispatcher to route tool names ──
+    async def _replay_handler(**kwargs: Any) -> dict[str, Any]:
+        history_uc = factory.history
+
+        async def _dispatcher(tool_name: str, resolved_params: dict[str, Any]) -> Any:
+            if tool_name not in _TOOL_HANDLER_MAP:
+                raise ValueError(f"Unknown tool in history: {tool_name}")
+            attr_name, method_name = _TOOL_HANDLER_MAP[tool_name]
+            uc = getattr(factory, attr_name, None)
+            if uc is None:
+                raise RuntimeError(f"Use case not found: {attr_name}")
+            method = getattr(uc, method_name, None)
+            if method is None:
+                raise RuntimeError(f"Method not found: {attr_name}.{method_name}")
+            if asyncio.iscoroutinefunction(method):
+                return await method(**resolved_params)
+            return method(**resolved_params)
+
+        return await history_uc.replay_history(_dispatcher)
+
+    routing["replay_history"] = _replay_handler
+
     _routing_cache = routing
     return routing
-
-
-def _has_kwargs(handler: Callable[..., Any]) -> bool:
-    import inspect
-
-    try:
-        sig = inspect.signature(handler)
-        return any(p.kind == inspect.Parameter.VAR_KEYWORD for p in sig.parameters.values())
-    except (ValueError, TypeError):
-        return False
 
 
 def _format_result(result: Any) -> str:
@@ -396,6 +449,9 @@ def _label(key: str) -> str:
     """Map JSON keys to human-readable English labels for user-facing output."""
     labels: dict[str, str] = {
         "handle": "Handle",
+        "new_handle": "New Handle",
+        "source_handle": "Source Handle",
+        "target_handle": "Target Handle",
         "name": "Name",
         "version": "Version",
         "path": "Path",
@@ -415,6 +471,41 @@ def _label(key: str) -> str:
         "color": "Color",
         "value": "Value",
         "type": "Type",
+        "layer": "Layer",
+        "angle": "Angle",
+        "radius": "Radius",
+        "diameter": "Diameter",
+        "height": "Height",
+        "width": "Width",
+        "length": "Length",
+        "thickness": "Thickness",
+        "delta": "Delta",
+        "dx": "DX",
+        "dy": "DY",
+        "dz": "DZ",
+        "cx": "Center X",
+        "cy": "Center Y",
+        "cz": "Center Z",
+        "center_x": "Center X",
+        "center_y": "Center Y",
+        "center_z": "Center Z",
+        "axis_x": "Axis X",
+        "axis_y": "Axis Y",
+        "axis_z": "Axis Z",
+        "insertion": "Insertion Point",
+        "block_name": "Block Name",
+        "scale": "Scale",
+        "rotation": "Rotation",
+        "count": "Count",
+        "direction": "Direction",
+        "fit_points_count": "Fit Points",
+        "vertices_count": "Vertices",
+        "segments": "Segments",
+        "distance": "Distance",
+        "area": "Area",
+        "pattern": "Pattern",
+        "item_type": "Entity Type",
+        "render_mode": "Render Mode",
     }
     return labels.get(key, key.capitalize())
 
@@ -454,6 +545,9 @@ def create_server() -> Server:
             _ensure_connected()
         except Exception:
             log.exception("Failed to connect to CAD")
+            from src.presentation.context import reset as _reset_context
+
+            _reset_context()
             return [
                 TextContent(
                     type="text",
@@ -474,6 +568,7 @@ def create_server() -> Server:
         routing = _build_routing()
         handler = routing.get(name)
         if handler is None:
+            log.warning("Unknown tool called", tool=name)
             return [TextContent(type="text", text=f"UNKNOWN TOOL: {name}")]
 
 
@@ -483,7 +578,10 @@ def create_server() -> Server:
             return [TextContent(type="text", text=f"VALIDATION ERROR: {e}")]
 
         try:
-            result = handler(**args)
+            if asyncio.iscoroutinefunction(handler):
+                result = await handler(**args)
+            else:
+                result = handler(**args)
             log.info("Tool result", tool=name, result=result)
             return [TextContent(type="text", text=_format_result(result))]
         except NanocadError as e:
@@ -554,14 +652,6 @@ def create_sse_app(
         routes.append(Route(message_path, handle_messages, methods=["POST"]))
 
     return Starlette(routes=routes)
-
-
-async def _sse_error_handler(_request: Any, exc: Exception) -> Any:
-    """Log SSE errors."""
-    from starlette.responses import Response
-
-    log.error("SSE error", error=str(exc))
-    return Response("Internal Server Error", status_code=500)
 
 
 async def run_sse(port: int = 8081, host: str = "0.0.0.0") -> None:

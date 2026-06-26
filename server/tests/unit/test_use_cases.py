@@ -430,12 +430,82 @@ class TestFeatureUseCase:
         result = uc.create_sketch(solid_handle="S1")
         assert result == "SKETCH_001"
 
-    def test_raises_without_http(self, mock_repo: MagicMock) -> None:
+    def test_get_feature_list(self, mock_repo: MagicMock) -> None:
+        from src.application.extended_use_cases import FeatureUseCase
+
+        http = MagicMock()
+        http.is_available = True
+        http.get_feature_list.return_value = [
+            {"type": "Hole", "handle": "F1", "suppressed": False, "diameter": 10},
+        ]
+        uc = FeatureUseCase(http)
+        result = uc.get_feature_list(solid_handle="S1")
+        assert len(result) == 1
+        assert result[0]["type"] == "Hole"
+        http.get_feature_list.assert_called_once_with(solid_handle="S1")
+
+    def test_suppress_feature(self, mock_repo: MagicMock) -> None:
+        from src.application.extended_use_cases import FeatureUseCase
+
+        http = MagicMock()
+        http.is_available = True
+        http.suppress_feature.return_value = True
+        uc = FeatureUseCase(http)
+        result = uc.suppress_feature(feature_handle="F1")
+        assert result is True
+        http.suppress_feature.assert_called_once_with(feature_handle="F1")
+
+    def test_unsuppress_feature(self, mock_repo: MagicMock) -> None:
+        from src.application.extended_use_cases import FeatureUseCase
+
+        http = MagicMock()
+        http.is_available = True
+        http.unsuppress_feature.return_value = True
+        uc = FeatureUseCase(http)
+        result = uc.unsuppress_feature(feature_handle="F1")
+        assert result is True
+        http.unsuppress_feature.assert_called_once_with(feature_handle="F1")
+
+    def test_edit_feature_parameter(self, mock_repo: MagicMock) -> None:
+        from src.application.extended_use_cases import FeatureUseCase
+
+        http = MagicMock()
+        http.is_available = True
+        http.edit_feature_parameter.return_value = True
+        uc = FeatureUseCase(http)
+        result = uc.edit_feature_parameter(
+            feature_handle="F1", param_name="diameter", value=15
+        )
+        assert result is True
+        http.edit_feature_parameter.assert_called_once_with(
+            feature_handle="F1", param_name="diameter", value=15
+        )
+
+    def test_delete_feature(self, mock_repo: MagicMock) -> None:
+        from src.application.extended_use_cases import FeatureUseCase
+
+        http = MagicMock()
+        http.is_available = True
+        http.delete_feature.return_value = True
+        uc = FeatureUseCase(http)
+        result = uc.delete_feature(feature_handle="F1")
+        assert result is True
+        http.delete_feature.assert_called_once_with(feature_handle="F1")
+
+    def test_all_new_methods_raise_without_http(self, mock_repo: MagicMock) -> None:
         from src.application.extended_use_cases import FeatureUseCase
 
         uc = FeatureUseCase(None)
         with pytest.raises(NotSupportedError, match="Requires .NET engine"):
-            uc.create_simple_hole(solid_handle="S1", diameter=10, depth=50)
+            uc.get_feature_list(solid_handle="S1")
+        with pytest.raises(NotSupportedError, match="Requires .NET engine"):
+            uc.suppress_feature(feature_handle="F1")
+        with pytest.raises(NotSupportedError, match="Requires .NET engine"):
+            uc.unsuppress_feature(feature_handle="F1")
+        with pytest.raises(NotSupportedError, match="Requires .NET engine"):
+            uc.edit_feature_parameter(feature_handle="F1", param_name="d", value=1)
+        with pytest.raises(NotSupportedError, match="Requires .NET engine"):
+            uc.delete_feature(feature_handle="F1")
 
 
 class TestNurbIfcUseCase:

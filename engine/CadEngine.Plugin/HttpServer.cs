@@ -7,6 +7,7 @@ using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using System.Web;
 using CadEngine.Services;
 
 namespace CadEngine
@@ -221,6 +222,12 @@ namespace CadEngine
             {
                 var req = ParseBody<ExportRequest>(request);
                 return req != null ? _documentService.ExportDxf(req.Path) : BadRequest();
+            }
+
+            if (method == "POST" && path == "/api/document/screenshot")
+            {
+                var req = ParseBody<ScreenshotRequest>(request);
+                return req != null ? _documentService.SaveScreenshot(req.Path, req.Width, req.Height) : BadRequest();
             }
 
             if (method == "POST" && path == "/api/document/zoom/extents")
@@ -487,9 +494,16 @@ namespace CadEngine
             { var req = ParseBody<ExtrudeRequest>(request); return req != null ? _solidService.Extrude(req) : BadRequest(); }
             if (method == "POST" && path == "/api/solid/revolve")
             { var req = ParseBody<RevolveRequest>(request); return req != null ? _solidService.Revolve(req) : BadRequest(); }
+            // 3D Sweep/Loft
+            if (method == "POST" && path == "/api/solid/sweep")
+            { var req = ParseBody<SweepRequest>(request); return req != null ? _solidService.SweepSolid(req.ProfileHandle, req.PathHandle) : BadRequest(); }
+            if (method == "POST" && path == "/api/solid/loft")
+            { var req = ParseBody<LoftRequest>(request); return req != null ? _solidService.LoftSolid(req.SectionHandles) : BadRequest(); }
             // 3D Move/Rotate
             if (method == "POST" && TryMatch(path, "/api/solid/{handle}/move3d", out var mvHandle))
             { var req = ParseBody<MoveRequest>(request); return req != null ? _solidService.MoveSolid(mvHandle!, req.Dx, req.Dy, req.Dz) : BadRequest(); }
+            if (method == "POST" && TryMatch(path, "/api/solid/{handle}/rotate3d", out var r3dHandle))
+            { var req = ParseBody<Rotate3dRequest>(request); return req != null ? _solidService.RotateSolid(r3dHandle!, req.Angle, req.CenterX, req.CenterY, req.CenterZ, req.AxisX, req.AxisY, req.AxisZ) : BadRequest(); }
             // 3D View
             if (method == "POST" && path == "/api/solid/view")
             { var req = ParseBody<ViewRequest>(request); return req != null ? _solidService.Set3dView(req.Direction, req.RenderMode) : BadRequest(); }
@@ -627,6 +641,12 @@ namespace CadEngine
             { var req = ParseBody<Align3DRequest>(request); return req != null ? _transformationService.Align3D(req) : BadRequest(); }
             if (method == "POST" && TryMatch(path, "/api/entity/{handle}/mirror3d", out var mir3Handle))
             { var req = ParseBody<Mirror3DRequest>(request); return req != null ? _transformationService.Mirror3D(req) : BadRequest(); }
+            if (method == "POST" && TryMatch(path, "/api/entity/{handle}/trim", out var trimHandle))
+            { var req = ParseBody<TrimRequest>(request); return req != null ? _transformationService.TrimEntity(req) : BadRequest(); }
+            if (method == "POST" && TryMatch(path, "/api/entity/{handle}/extend", out var extHandle))
+            { var req = ParseBody<ExtendRequest>(request); return req != null ? _transformationService.ExtendEntity(req) : BadRequest(); }
+            if (method == "POST" && TryMatch(path, "/api/entity/{handle}/offset", out var offHandle))
+            { var req = ParseBody<OffsetRequest>(request); return req != null ? _transformationService.OffsetEntity(req) : BadRequest(); }
 
             // === NEW PRIMITIVES ===
             if (method == "POST" && path == "/api/entity/polygon")
@@ -733,6 +753,25 @@ namespace CadEngine
             { var req = ParseBody<ExtrudeFeatureRequest>(request); return req != null ? _featureService.CreateExtrudeFeature(req.SolidHandle, req.ProfileHandle, req.Height, req.TaperAngle, req.Direction) : BadRequest(); }
             if (method == "POST" && path == "/api/feature/revolve")
             { var req = ParseBody<RevolveFeatureRequest>(request); return req != null ? _featureService.CreateRevolveFeature(req.SolidHandle, req.ProfileHandle, req.AxisX, req.AxisY, req.AxisZ, req.DirX, req.DirY, req.DirZ, req.Angle) : BadRequest(); }
+            if (method == "POST" && path == "/api/feature/shell")
+            { var req = ParseBody<ShellRequest>(request); return req != null ? _featureService.CreateShell(req.SolidHandle, req.Thickness, req.Outward) : BadRequest(); }
+            if (method == "POST" && path == "/api/feature/pattern/circular")
+            { var req = ParseBody<CircularPatternRequest>(request); return req != null ? _featureService.CreateCircularPattern(req.SolidHandle, req.FeatureHandle, req.Count, req.Angle) : BadRequest(); }
+
+            // === FEATURE TREE MANAGEMENT (Phase P2) ===
+            if (method == "GET" && path.StartsWith("/api/feature/list"))
+            {
+                var solidHandle = ParseQueryParam(request, "solid_handle");
+                return !string.IsNullOrEmpty(solidHandle) ? _featureService.GetFeatureList(solidHandle) : BadRequest();
+            }
+            if (method == "POST" && path == "/api/feature/suppress")
+            { var req = ParseBody<FeatureHandleRequest>(request); return req != null ? _featureService.SuppressFeature(req.FeatureHandle) : BadRequest(); }
+            if (method == "POST" && path == "/api/feature/unsuppress")
+            { var req = ParseBody<FeatureHandleRequest>(request); return req != null ? _featureService.UnsuppressFeature(req.FeatureHandle) : BadRequest(); }
+            if (method == "POST" && path == "/api/feature/edit")
+            { var req = ParseBody<EditFeatureParameterRequest>(request); return req != null ? _featureService.EditFeatureParameter(req.FeatureHandle, req.ParamName, req.Value) : BadRequest(); }
+            if (method == "POST" && path == "/api/feature/delete")
+            { var req = ParseBody<FeatureHandleRequest>(request); return req != null ? _featureService.DeleteFeature(req.FeatureHandle) : BadRequest(); }
 
             // === MLEADER ===
             if (method == "POST" && path == "/api/symbol/mleader")
@@ -806,6 +845,21 @@ namespace CadEngine
         private static ErrorResponse BadRequest()
         {
             return new ErrorResponse { Error = "Invalid request body" };
+        }
+
+        private static string? ParseQueryParam(HttpListenerRequest request, string key)
+        {
+            try
+            {
+                var query = request.Url?.Query;
+                if (string.IsNullOrEmpty(query)) return null;
+                var parsed = System.Web.HttpUtility.ParseQueryString(query);
+                return parsed[key];
+            }
+            catch
+            {
+                return null;
+            }
         }
 
         public void Dispose()

@@ -382,6 +382,10 @@ class DocumentUseCase:
         self._repo.export_dxf(path)
         return {"success": True, "path": path}
 
+    def screenshot(self, path: str, width: int = 1920, height: int = 1080) -> dict[str, Any]:
+        self._repo.screenshot(path=path, width=width, height=height)
+        return {"success": True, "path": path}
+
     def zoom_extents(self) -> dict[str, Any]:
         self._repo.zoom_extents()
         return {"success": True}
@@ -563,6 +567,26 @@ class SolidUseCase:
         return (
             {"handle": new_handle, "type": "SOLID3D"} if new_handle else {"error": "Revolve failed"}
         )
+
+    def rotate_solid(
+        self, handle: str, angle: float,
+        center_x: float = 0, center_y: float = 0, center_z: float = 0,
+        axis_x: float = 0, axis_y: float = 0, axis_z: float = 1,
+    ) -> dict[str, Any]:
+        success = self._repo.rotate_solid(
+            handle, angle, center_x, center_y, center_z, axis_x, axis_y, axis_z
+        )
+        return {
+            "success": success,
+            "handle": handle,
+            "angle": angle,
+            "center_x": center_x,
+            "center_y": center_y,
+            "center_z": center_z,
+            "axis_x": axis_x,
+            "axis_y": axis_y,
+            "axis_z": axis_z,
+        }
 
     def move_solid(self, handle: str, dx: float, dy: float, dz: float = 0) -> dict[str, Any]:
         success = self._repo.move_solid(handle, dx, dy, dz)

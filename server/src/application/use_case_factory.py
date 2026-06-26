@@ -33,6 +33,8 @@ from src.application.extended_use_cases import (
     TransformationUseCase,
     TrimExtendOffsetUseCase,
 )
+from src.application.history_use_case import HistoryUseCase
+from src.application.parameter_use_case import ParameterUseCase
 from src.application.use_cases import (
     BlockUseCase,
     DocumentUseCase,
@@ -185,6 +187,14 @@ class UseCaseFactory:
     @property
     def multicad(self) -> MultiCadUseCase:
         return self._get("multicad", lambda: MultiCadUseCase(self._http))
+
+    @property
+    def parameter(self) -> ParameterUseCase:
+        return self._get("parameter", lambda: ParameterUseCase())
+
+    @property
+    def history(self) -> HistoryUseCase:
+        return self._get("history", lambda: HistoryUseCase())
 
 
 __all__ = ["UseCaseFactory"]

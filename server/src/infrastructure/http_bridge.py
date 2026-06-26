@@ -170,6 +170,18 @@ class HttpCadBridge:
             logger.exception("Invalid JSON response %s %s: %s", method, path, e)
             return None
 
+    @staticmethod
+    def _result_success(result: dict[str, Any] | None) -> bool:
+        """Check if an HTTP result dict indicates success.
+
+        Returns ``True`` only when the request completed (result is not None)
+        AND the engine reported ``{"success": true}`` (or omitted ``success``,
+        assumed backward-compatible success).
+        """
+        if result is None:
+            return False
+        return result.get("success", True)
+
     # ── Health ─────────────────────────────────────────────────
 
     def check_health(self) -> dict[str, Any] | None:
@@ -186,7 +198,7 @@ class HttpCadBridge:
 
     def delete_entity(self, handle: str) -> bool:
         result = self._request("DELETE", f"/api/entity/{handle}")
-        return result is not None
+        return self._result_success(result)
 
     def get_entity(self, handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/entity/{handle}")
@@ -197,7 +209,7 @@ class HttpCadBridge:
             f"/api/entity/{handle}/move",
             json_body={"dx": dx, "dy": dy},
         )
-        return result is not None
+        return self._result_success(result)
 
     def copy_entity(self, handle: str) -> str | None:
         result = self._request("POST", f"/api/entity/{handle}/copy")
@@ -213,7 +225,7 @@ class HttpCadBridge:
             body["center_x"] = cx
             body["center_y"] = cy
         result = self._request("POST", f"/api/entity/{handle}/rotate", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def scale_entity(
         self, handle: str, factor: float, cx: float | None = None, cy: float | None = None
@@ -223,7 +235,7 @@ class HttpCadBridge:
             body["center_x"] = cx
             body["center_y"] = cy
         result = self._request("POST", f"/api/entity/{handle}/scale", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     # ── Layer operations ───────────────────────────────────────
 
@@ -245,11 +257,11 @@ class HttpCadBridge:
         if color:
             body["color"] = color
         result = self._request("POST", "/api/layer", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def set_current_layer(self, name: str) -> bool:
         result = self._request("POST", f"/api/layer/{name}/current")
-        return result is not None
+        return self._result_success(result)
 
     # ── Document operations ────────────────────────────────────
 
@@ -259,7 +271,7 @@ class HttpCadBridge:
     def save_document(self, path: str | None = None) -> bool:
         body = {"path": path} if path else {}
         result = self._request("POST", "/api/document/save", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def save_project(self, filename: str, directory: str) -> bool:
         """Save the current document to ``directory/filename``.
@@ -279,21 +291,21 @@ class HttpCadBridge:
     def export_pdf(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/export/pdf", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     def export_dwg(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/export/dwg", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     def export_dxf(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/export/dxf", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     def zoom_extents(self) -> bool:
         result = self._request("POST", "/api/document/zoom/extents")
-        return result is not None
+        return self._result_success(result)
 
     def get_system_info(self) -> dict[str, Any] | None:
         return self._request("GET", "/api/system/info")
@@ -314,7 +326,7 @@ class HttpCadBridge:
 
     def set_system_variable(self, name: str, value: str) -> bool:
         result = self._request("POST", f"/api/system/variable/{name}", json_body={"value": value})
-        return result is not None
+        return self._result_success(result)
 
     def get_system_fonts(self) -> list[dict[str, Any]]:
         """Get all available fonts in the system."""
@@ -443,14 +455,22 @@ class HttpCadBridge:
             "/api/viewport",
             json_body={"name": name, "type": vp_type},
         )
-        return result is not None
+        return self._result_success(result)
 
     def render(self, output_file: str | None = None) -> bool:
         body: dict[str, Any] = {}
         if output_file:
             body["output_file"] = output_file
         result = self._request("POST", "/api/render", json_body=body)
-        return result is not None
+        return self._result_success(result)
+
+    def screenshot(self, path: str, width: int = 1920, height: int = 1080) -> bool:
+        result = self._request(
+            "POST",
+            "/api/document/screenshot",
+            json_body={"path": path, "width": width, "height": height},
+        )
+        return self._result_success(result)
 
     def create_gradient(
         self,
@@ -559,7 +579,22 @@ class HttpCadBridge:
         result = self._request(
             "POST", f"/api/solid/{handle}/move3d", json_body={"dx": dx, "dy": dy, "dz": dz}
         )
-        return result is not None
+        return self._result_success(result)
+
+    def rotate_solid(
+        self, handle: str, angle: float,
+        cx: float = 0, cy: float = 0, cz: float = 0,
+        ax: float = 0, ay: float = 0, az: float = 1,
+    ) -> bool:
+        result = self._request(
+            "POST", f"/api/solid/{handle}/rotate3d",
+            json_body={
+                "angle": angle,
+                "center_x": cx, "center_y": cy, "center_z": cz,
+                "axis_x": ax, "axis_y": ay, "axis_z": az,
+            },
+        )
+        return self._result_success(result)
 
     def set_3d_view(self, direction: str, render_mode: str = "wireframe") -> bool:
         result = self._request(
@@ -567,7 +602,7 @@ class HttpCadBridge:
             "/api/solid/view",
             json_body={"direction": direction, "render_mode": render_mode},
         )
-        return result is not None
+        return self._result_success(result)
 
     def get_solid_properties(self, handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/solid/{handle}/props")
@@ -924,7 +959,7 @@ class HttpCadBridge:
             f"/api/entity/{handle}/mirror",
             json_body={"p1_x": p1_x, "p1_y": p1_y, "p2_x": p2_x, "p2_y": p2_y},
         )
-        return result is not None
+        return self._result_success(result)
 
     # -- Transformation operations --
 
@@ -934,7 +969,7 @@ class HttpCadBridge:
             f"/api/entity/{handle}/stretch",
             json_body={"handle": handle, "points": [], "dx": dx, "dy": dy},
         )
-        return result is not None
+        return self._result_success(result)
 
     def explode_entity(self, handle: str) -> dict[str, Any] | None:
         return self._request("POST", f"/api/entity/{handle}/explode")
@@ -1012,7 +1047,7 @@ class HttpCadBridge:
                 "dst_p3_z": dst_p3[2],
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def mirror_3d(
         self,
@@ -1037,7 +1072,7 @@ class HttpCadBridge:
                 "p3_z": p3[2],
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     # -- New Primitive operations --
 
@@ -1103,25 +1138,25 @@ class HttpCadBridge:
 
     def undo(self) -> bool:
         result = self._request("POST", "/api/document/undo")
-        return result is not None
+        return self._result_success(result)
 
     def redo(self) -> bool:
         result = self._request("POST", "/api/document/redo")
-        return result is not None
+        return self._result_success(result)
 
     def purge(self) -> bool:
         result = self._request("POST", "/api/document/purge")
-        return result is not None
+        return self._result_success(result)
 
     def import_step(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/import/step", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     def export_step(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/export/step", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     # -- Block Create/Explode --
 
@@ -1150,9 +1185,9 @@ class HttpCadBridge:
             json_body={
                 "x": x,
                 "y": y,
-                "scaleX": scale,
-                "scaleY": scale,
-                "scaleZ": scale,
+                "scale_x": scale,
+                "scale_y": scale,
+                "scale_z": scale,
                 "rotation": rotation,
             },
         )
@@ -1167,7 +1202,7 @@ class HttpCadBridge:
 
     def explode_block(self, name: str) -> bool:
         result = self._request("POST", f"/api/block/{name}/explode")
-        return result is not None
+        return self._result_success(result)
 
     # -- Quick Wins --
     def new_document(
@@ -1190,7 +1225,7 @@ class HttpCadBridge:
         if save_path:
             body["save_path"] = validate_file_path(save_path)
         result = self._request("POST", "/api/document/new", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def create_project(
         self,
@@ -1218,15 +1253,15 @@ class HttpCadBridge:
     def open_document(self, path: str) -> bool:
         safe = validate_file_path(path)
         result = self._request("POST", "/api/document/open", json_body={"path": safe})
-        return result is not None
+        return self._result_success(result)
 
     def close_document(self) -> bool:
         result = self._request("POST", "/api/document/close")
-        return result is not None
+        return self._result_success(result)
 
     def delete_block(self, name: str) -> bool:
         result = self._request("DELETE", f"/api/block/{name}")
-        return result is not None
+        return self._result_success(result)
 
     def get_block_entities(self, name: str) -> list[dict[str, Any]]:
         result = self._request("GET", f"/api/block/{name}/entities")
@@ -1250,7 +1285,7 @@ class HttpCadBridge:
             f"/api/entity/{handle}/extend",
             json_body={"handle": handle, "end_x": end_x, "end_y": end_y},
         )
-        return result is not None
+        return self._result_success(result)
 
     def offset_entity(self, handle: str, distance: float) -> dict[str, Any] | None:
         return self._request(
@@ -1262,23 +1297,23 @@ class HttpCadBridge:
     # -- Layer Management --
     def layer_isolate(self, name: str) -> bool:
         result = self._request("POST", f"/api/layer/{name}/isolate")
-        return result is not None
+        return self._result_success(result)
 
     def layer_off(self, name: str) -> bool:
         result = self._request("POST", f"/api/layer/{name}/off")
-        return result is not None
+        return self._result_success(result)
 
     def layer_freeze(self, name: str) -> bool:
         result = self._request("POST", f"/api/layer/{name}/freeze")
-        return result is not None
+        return self._result_success(result)
 
     def layer_on_all(self) -> bool:
         result = self._request("POST", "/api/layer/on")
-        return result is not None
+        return self._result_success(result)
 
     def layer_thaw_all(self) -> bool:
         result = self._request("POST", "/api/layer/thaw")
-        return result is not None
+        return self._result_success(result)
 
     # -- DIMLINEAR --
     def create_linear_dimension(
@@ -1312,13 +1347,13 @@ class HttpCadBridge:
             "/api/solid/sweep",
             json_body={"profile_handle": profile_handle, "path_handle": path_handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def loft_solid(self, section_handles: list[str]) -> bool:
         result = self._request(
             "POST", "/api/solid/loft", json_body={"section_handles": section_handles}
         )
-        return result is not None
+        return self._result_success(result)
 
     def fillet_edge(self, handle: str, radius: float = 5.0) -> str | None:
         result = self._request(
@@ -1345,13 +1380,13 @@ class HttpCadBridge:
             "/api/assembly/insert",
             json_body={"block_name": block_name, "x": x, "y": y, "z": z},
         )
-        return result is not None
+        return self._result_success(result)
 
     def assembly_mate(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/assembly/mate", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def assembly_angle(self, handle1: str, handle2: str, angle: float) -> bool:
         result = self._request(
@@ -1359,13 +1394,13 @@ class HttpCadBridge:
             "/api/assembly/angle",
             json_body={"handle1": handle1, "handle2": handle2, "angle": angle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def assembly_tangent(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/assembly/tangent", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def assembly_symmetry(self, handle1: str, handle2: str, plane_handle: str) -> bool:
         result = self._request(
@@ -1373,7 +1408,7 @@ class HttpCadBridge:
             "/api/assembly/symmetry",
             json_body={"handle1": handle1, "handle2": handle2, "plane_handle": plane_handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     # -- 3D Features --
     def create_simple_hole(self, solid_handle: str, diameter: float, depth: float) -> bool:
@@ -1382,7 +1417,7 @@ class HttpCadBridge:
             "/api/feature/hole/simple",
             json_body={"solid_handle": solid_handle, "diameter": diameter, "depth": depth},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_threaded_hole(self, solid_handle: str, diameter: float, depth: float) -> bool:
         result = self._request(
@@ -1390,7 +1425,7 @@ class HttpCadBridge:
             "/api/feature/hole/threaded",
             json_body={"solid_handle": solid_handle, "diameter": diameter, "depth": depth},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_standard_hole(
         self, solid_handle: str, diameter: float, depth: float, standard: str = "ISO"
@@ -1405,7 +1440,7 @@ class HttpCadBridge:
                 "standard": standard,
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_shell(self, solid_handle: str, thickness: float, outward: bool = False) -> bool:
         result = self._request(
@@ -1413,7 +1448,7 @@ class HttpCadBridge:
             "/api/feature/shell",
             json_body={"solid_handle": solid_handle, "thickness": thickness, "outward": outward},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_mirror_feature(self, solid_handle: str, plane_handle: str) -> bool:
         result = self._request(
@@ -1421,7 +1456,7 @@ class HttpCadBridge:
             "/api/feature/mirror",
             json_body={"solid_handle": solid_handle, "plane_handle": plane_handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_circular_pattern(
         self, solid_handle: str, feature_handle: str, count: int, angle: float
@@ -1436,7 +1471,7 @@ class HttpCadBridge:
                 "angle": angle,
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_rectangular_pattern(
         self,
@@ -1459,7 +1494,7 @@ class HttpCadBridge:
                 "spacing_y": spacing_y,
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_sketch(self, solid_handle: str) -> str | None:
         result = self._request(
@@ -1483,7 +1518,7 @@ class HttpCadBridge:
                 "radius": radius,
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def add_sketch_line(
         self,
@@ -1508,7 +1543,7 @@ class HttpCadBridge:
                 "z2": z2,
             },
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_profile(self, sketch_handle: str) -> str | None:
         result = self._request(
@@ -1568,6 +1603,67 @@ class HttpCadBridge:
         )
         return str(result.get("handle")) if result and "handle" in result else None
 
+    # -- Feature Tree Management (Phase P2) --
+
+    def get_feature_list(self, solid_handle: str) -> list[dict[str, Any]] | None:
+        """Get list of features on a 3D solid.
+
+        Returns:
+            List of feature dicts with type, handle, status, etc.
+        """
+        result = self._request(
+            "GET",
+            f"/api/feature/list?solid_handle={solid_handle}",
+        )
+        if result and "features" in result:
+            return list(result["features"])
+        return None
+
+    def suppress_feature(self, feature_handle: str) -> bool:
+        """Suppress (disable) a parametric feature."""
+        result = self._request(
+            "POST",
+            "/api/feature/suppress",
+            json_body={"feature_handle": feature_handle},
+        )
+        return self._result_success(result)
+
+    def unsuppress_feature(self, feature_handle: str) -> bool:
+        """Unsuppress (resume) a suppressed feature."""
+        result = self._request(
+            "POST",
+            "/api/feature/unsuppress",
+            json_body={"feature_handle": feature_handle},
+        )
+        return self._result_success(result)
+
+    def edit_feature_parameter(
+        self,
+        feature_handle: str,
+        param_name: str,
+        value: float,
+    ) -> bool:
+        """Edit a parameter of a parametric feature."""
+        result = self._request(
+            "POST",
+            "/api/feature/edit",
+            json_body={
+                "feature_handle": feature_handle,
+                "param_name": param_name,
+                "value": value,
+            },
+        )
+        return self._result_success(result)
+
+    def delete_feature(self, feature_handle: str) -> bool:
+        """Delete a parametric feature from the solid."""
+        result = self._request(
+            "POST",
+            "/api/feature/delete",
+            json_body={"feature_handle": feature_handle},
+        )
+        return self._result_success(result)
+
     # -- Selection / QSELECT --
     def select_entities(
         self,
@@ -1612,7 +1708,7 @@ class HttpCadBridge:
             "naming_y": naming_y,
         }
         result = self._request("POST", "/api/multicad/grid-axis", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def create_grid_label(
         self,
@@ -1628,7 +1724,7 @@ class HttpCadBridge:
             "direction": direction,
         }
         result = self._request("POST", "/api/multicad/grid-label", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def create_room(
         self,
@@ -1642,7 +1738,7 @@ class HttpCadBridge:
         if name:
             body["name"] = name
         result = self._request("POST", "/api/multicad/room", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def get_room_properties(self, handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/multicad/room/{handle}")
@@ -1654,7 +1750,7 @@ class HttpCadBridge:
         if properties:
             body["properties"] = properties
         result = self._request("POST", "/api/multicad/custom-object", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def create_parametric_object(
         self, object_type: str, parameters: dict[str, Any] | None = None
@@ -1663,7 +1759,7 @@ class HttpCadBridge:
         if parameters:
             body["parameters"] = parameters
         result = self._request("POST", "/api/multicad/parametric", json_body=body)
-        return result is not None
+        return self._result_success(result)
 
     def create_reactor(self, entity_handle: str, event_type: str = "modified") -> bool:
         result = self._request(
@@ -1671,7 +1767,7 @@ class HttpCadBridge:
             "/api/multicad/reactor",
             json_body={"entity_handle": entity_handle, "event_type": event_type},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_2d_break(
         self,
@@ -1686,7 +1782,7 @@ class HttpCadBridge:
             "/api/multicad/2d-break",
             json_body={"view_handle": view_handle, "x1": x1, "y1": y1, "x2": x2, "y2": y2},
         )
-        return result is not None
+        return self._result_success(result)
 
     def start_motion_preview(self, handle: str) -> bool:
         result = self._request(
@@ -1694,11 +1790,11 @@ class HttpCadBridge:
             "/api/multicad/motion-preview/start",
             json_body={"handle": handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def stop_motion_preview(self) -> bool:
         result = self._request("POST", "/api/multicad/motion-preview/stop")
-        return result is not None
+        return self._result_success(result)
 
     def create_body_contour(self, solid_handle: str) -> bool:
         result = self._request(
@@ -1706,42 +1802,43 @@ class HttpCadBridge:
             "/api/multicad/body-contour",
             json_body={"solid_handle": solid_handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def check_3d_faces(self, handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/multicad/3d-faces/{handle}")
 
     # -- STL Export --
     def export_stl(self, path: str, binary: bool = True) -> bool:
+        safe = validate_file_path(path)
         result = self._request(
-            "POST", "/api/document/export/stl", json_body={"path": path, "binary": binary}
+            "POST", "/api/document/export/stl", json_body={"path": safe, "binary": binary}
         )
-        return result is not None
+        return self._result_success(result)
 
     # -- 2D Constraints --
     def constraint_parallel(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/constraint/parallel", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_coincident(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/constraint/coincident", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_fix(self, handle: str) -> bool:
         result = self._request("POST", "/api/constraint/fix", json_body={"handle": handle})
-        return result is not None
+        return self._result_success(result)
 
     def constraint_horizontal(self, handle: str) -> bool:
         result = self._request("POST", "/api/constraint/horizontal", json_body={"handle": handle})
-        return result is not None
+        return self._result_success(result)
 
     def constraint_vertical(self, handle: str) -> bool:
         result = self._request("POST", "/api/constraint/vertical", json_body={"handle": handle})
-        return result is not None
+        return self._result_success(result)
 
     def constraint_tangent(self, handle_line: str, handle_curve: str) -> bool:
         result = self._request(
@@ -1749,7 +1846,7 @@ class HttpCadBridge:
             "/api/constraint/tangent",
             json_body={"handle_line": handle_line, "handle_curve": handle_curve},
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_perpendicular(self, handle1: str, handle2: str) -> bool:
         result = self._request(
@@ -1757,25 +1854,25 @@ class HttpCadBridge:
             "/api/constraint/perpendicular",
             json_body={"handle1": handle1, "handle2": handle2},
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_collinear(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/constraint/collinear", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_concentric(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/constraint/concentric", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_equal(self, handle1: str, handle2: str) -> bool:
         result = self._request(
             "POST", "/api/constraint/equal", json_body={"handle1": handle1, "handle2": handle2}
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_symmetric(self, handle1: str, handle2: str, plane_handle: str) -> bool:
         result = self._request(
@@ -1783,7 +1880,7 @@ class HttpCadBridge:
             "/api/constraint/symmetric",
             json_body={"handle1": handle1, "handle2": handle2, "plane_handle": plane_handle},
         )
-        return result is not None
+        return self._result_success(result)
 
     def constraint_distance(self, handle1: str, handle2: str, distance: float) -> bool:
         result = self._request(
@@ -1791,7 +1888,7 @@ class HttpCadBridge:
             "/api/constraint/distance",
             json_body={"handle1": handle1, "handle2": handle2, "distance": distance},
         )
-        return result is not None
+        return self._result_success(result)
 
     # ── Sheet Metal ────────────────────────────────────────────
 
@@ -1803,7 +1900,7 @@ class HttpCadBridge:
             "/api/sheetmetal/base-flange",
             json_body={"x": x, "y": y, "width": width, "length": length, "thickness": thickness},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_edge_flange(self, base_handle: str, bend_radius: float = 5.0) -> bool:
         result = self._request(
@@ -1811,19 +1908,19 @@ class HttpCadBridge:
             "/api/sheetmetal/edge-flange",
             json_body={"base_handle": base_handle, "bend_radius": bend_radius},
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_bend(self, handle: str, bend_radius: float = 5.0) -> bool:
         result = self._request(
             "POST", "/api/sheetmetal/bend", json_body={"handle": handle, "bend_radius": bend_radius}
         )
-        return result is not None
+        return self._result_success(result)
 
     def unfold_sheet_metal(self, handle: str, x: float = 0, y: float = 0) -> bool:
         result = self._request(
             "POST", "/api/sheetmetal/unfold", json_body={"handle": handle, "x": x, "y": y}
         )
-        return result is not None
+        return self._result_success(result)
 
     def create_base_plate(
         self, x: float, y: float, width: float, length: float, thickness: float
@@ -1833,7 +1930,7 @@ class HttpCadBridge:
             "/api/sheetmetal/base-plate",
             json_body={"x": x, "y": y, "width": width, "length": length, "thickness": thickness},
         )
-        return result is not None
+        return self._result_success(result)
 
     # -- MLEADER --
     def create_mleader(
@@ -1870,8 +1967,9 @@ class HttpCadBridge:
         return self._request("PATCH", "/api/entity/nurb", json_body=kwargs)
 
     def import_ifc(self, path: str) -> bool:
-        result = self._request("POST", "/api/document/import/ifc", json_body={"path": path})
-        return result is not None
+        safe = validate_file_path(path)
+        result = self._request("POST", "/api/document/import/ifc", json_body={"path": safe})
+        return self._result_success(result)
 
     def get_ifc_entities(self) -> list[dict[str, Any]] | None:
         result = self._request("GET", "/api/document/ifc/entities")

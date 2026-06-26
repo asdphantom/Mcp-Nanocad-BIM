@@ -106,7 +106,7 @@ class TestConnection:
         assert r.is_available() is False
 
     def test_get_system_info_full(self, repo: CadRepository) -> None:
-        repo._http.check_health.return_value = {
+        repo._http.get_system_info.return_value = {
             "version": "26.0", "active_documents": 1
         }
         info = repo.get_system_info()
@@ -518,7 +518,7 @@ class TestBlockOps:
             repo.get_blocks()
 
     def test_insert_block(self, repo: CadRepository) -> None:
-        repo._http._request.return_value = {"handle": "BR_001"}
+        repo._http.insert_block.return_value = "BR_001"
         ref = CadBlockRef(
             block_name=LayerName(value="TestBlock"),
             insertion=Point2D(x=10, y=20),
@@ -527,7 +527,7 @@ class TestBlockOps:
         assert str(result) == "BR_001"
 
     def test_insert_block_fails(self, repo: CadRepository) -> None:
-        repo._http._request.return_value = None
+        repo._http.insert_block.return_value = None
         ref = CadBlockRef(
             block_name=LayerName(value="TestBlock"),
             insertion=Point2D(x=10, y=20),
@@ -616,7 +616,7 @@ class TestDocumentOps:
         repo._http._request.return_value = {"success": True}
         repo.export_dwg("C:\\out.dwg")
         repo._http._request.assert_called_once_with(
-            "POST", "/api/document/export/dwg", json_body={"path": "C:\\out.dwg"}
+            "POST", "/api/document/export/dwg", json_body={"path": "C:/out.dwg"}
         )
 
     def test_export_dwg_not_implemented(self) -> None:
@@ -710,7 +710,7 @@ class TestSystemOps:
     def test_set_system_variable_full(self, repo: CadRepository) -> None:
         repo.set_system_variable("CMDECHO", "0")
         repo._http.set_system_variable.assert_called_once_with("CMDECHO", "0")
-        repo._com.com_set_system_variable.assert_called_once_with("CMDECHO", "0")
+        repo._com.com_set_system_variable.assert_not_called()
 
 
 # ── Extended HTTP-only operations ──────────────────────────────

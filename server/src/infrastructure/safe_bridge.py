@@ -19,6 +19,7 @@ if TYPE_CHECKING:
 logger = logging.getLogger(__name__)
 
 DEFAULT_CALL_DELAY = 0.05  # seconds between calls to avoid queue overload
+MAX_CONSECUTIVE_ERRORS = 5  # raise SafeBridgeError after this many
 
 
 class SafeBridgeError(Exception):
@@ -75,18 +76,27 @@ class SafeBridge:
             try:
                 result = fn(*args, **kwargs)
                 self._consecutive_errors = 0
-                time.sleep(self._call_delay)
+                if self._call_delay:
+                    time.sleep(self._call_delay)
                 return result
-            except NanocadError as e:
+            except (RuntimeError, ConnectionError, OSError, NanocadError) as e:
                 self._consecutive_errors += 1
-                logger.warning("SafeBridge.%s: nanoCAD error: %s", name, e)
-                time.sleep(self._call_delay * 2)
+                logger.warning(
+                    "SafeBridge.%s: %s (err #%d)", name, e, self._consecutive_errors
+                )
+                self._bridge._available = False
+                if self._consecutive_errors >= MAX_CONSECUTIVE_ERRORS:
+                    raise SafeBridgeError(
+                        f"Bridge permanently unavailable after {self._consecutive_errors} consecutive errors"
+                    ) from None
+                if self._call_delay:
+                    time.sleep(self._call_delay * 2)
                 return None
-            except Exception as e:
+            except (AttributeError, TypeError, ValueError) as e:
                 self._consecutive_errors += 1
-                logger.warning("SafeBridge.%s failed: %s", name, e)
-                time.sleep(self._call_delay * 2)
-                return None
+                logger.exception("SafeBridge.%s: programming error: %s", name, e)
+                self._bridge._available = False
+                raise
 
         return wrapper
 

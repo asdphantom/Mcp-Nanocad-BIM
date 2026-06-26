@@ -3,7 +3,7 @@
 Tests cover:
 - setup_logging
 - _ensure_connected (context vars initialization)
-- _get_tools (tool definitions, 183 tools)
+- _get_tools (tool definitions, 205 tools)
 - _build_routing (routing table via UseCaseFactory)
 - _has_kwargs utility
 - create_server (MCP Server)
@@ -184,7 +184,7 @@ class TestGetTools:
     def test_returns_correct_tool_count(self) -> None:
         """Verify we have the expected number of tool definitions."""
         tools = srv._get_tools()
-        assert len(tools) == 183, f"Expected 183 tools, got {len(tools)}"
+        assert len(tools) == 207, f"Expected 207 tools, got {len(tools)}"
 
     def test_first_tool_is_health_check(self) -> None:
         tools = srv._get_tools()
@@ -399,23 +399,27 @@ def _setup_mock_context(
 
 
 class TestBuildRouting:
-    def test_returns_empty_when_context_is_not_set(self) -> None:
-        """_build_routing should return empty dict if context vars are not set."""
+    def test_returns_replay_only_when_context_is_not_set(self) -> None:
+        """Only server-side tools (replay_history) available without context."""
         reset_context()
         srv._routing_cache = None
         with patch.object(srv, "get_factory", return_value=None):
             routing = srv._build_routing()
         assert isinstance(routing, dict)
-        assert len(routing) == 0
+        assert "replay_history" in routing
+        # All other tools require a factory
+        assert len(routing) == 1
 
     def test_returns_dict_with_all_tool_names(self) -> None:
         _setup_mock_context()
         srv._routing_cache = None
         routing = srv._build_routing()
         tools = srv._get_tools()
-        assert len(routing) == len(tools)
+        # routing includes replay_history (not in TOOL_DEFS)
+        assert len(routing) >= len(tools)
         for t in tools:
             assert t.name in routing
+        assert "replay_history" in routing
 
     def test_each_handler_is_callable(self) -> None:
         _setup_mock_context()
@@ -533,43 +537,6 @@ class TestMultiCadTools:
         routing = srv._build_routing()
         factory = get_factory()
         assert routing["create_room"] == factory.multicad.create_room
-
-
-# ---------------------------------------------------------------------------
-# _has_kwargs
-# ---------------------------------------------------------------------------
-
-
-class TestHasKwargs:
-    def test_with_kwargs(self) -> None:
-        def foo(**kwargs: Any) -> Any:
-            return kwargs
-
-        assert srv._has_kwargs(foo)
-
-    def test_without_kwargs(self) -> None:
-        def foo(x: int, y: int) -> int:
-            return x + y
-
-        assert not srv._has_kwargs(foo)
-
-    def test_with_args_and_kwargs(self) -> None:
-        def foo(*args: Any, **kwargs: Any) -> None:
-            pass
-
-        assert srv._has_kwargs(foo)
-
-    def test_with_positional_only(self) -> None:
-        assert not srv._has_kwargs(len)
-
-    def test_handles_inspect_error(self) -> None:
-        class Uninspectable:
-            def __call__(self) -> None:
-                pass
-
-        with patch("inspect.signature", side_effect=ValueError("bad sig")):
-            result = srv._has_kwargs(Uninspectable())
-            assert not result
 
 
 # ---------------------------------------------------------------------------

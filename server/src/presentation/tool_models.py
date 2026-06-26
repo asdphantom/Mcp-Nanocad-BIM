@@ -82,47 +82,29 @@ class CreateBoxInput(BaseModel):
     x: float
     y: float
     z: float
-    width: PositiveFloat
-    length: PositiveFloat
-    thickness: PositiveFloat
 
 
 class CreateSphereInput(BaseModel):
-    cx: float
-    cy: float
-    cz: float
     radius: PositiveFloat
 
 
 class CreateCylinderInput(BaseModel):
-    cx: float
-    cy: float
-    cz: float
     radius: PositiveFloat
     height: PositiveFloat
 
 
 class CreateConeInput(BaseModel):
-    cx: float
-    cy: float
-    cz: float
     radius_bottom: PositiveFloat
     height: PositiveFloat
 
 
 class CreateWedgeInput(BaseModel):
-    cx: float
-    cy: float
-    cz: float
-    width: PositiveFloat
-    length: PositiveFloat
-    height: PositiveFloat
+    x: float
+    y: float
+    z: float
 
 
 class CreateTorusInput(BaseModel):
-    cx: float
-    cy: float
-    cz: float
     major_radius: PositiveFloat
     minor_radius: PositiveFloat
 
@@ -131,10 +113,10 @@ class CreateTorusInput(BaseModel):
 
 
 class CreateHatchInput(BaseModel):
-    handle: str
     pattern: str = "SOLID"
     scale: PositiveFloat = 1.0
-    angle: float = 0
+    boundary_handles: list[str] | None = None
+    boundary_points: list[dict[str, float]] | None = None
 
 
 # ── Dimension ──────────────────────────────────────────────────────────
@@ -157,6 +139,7 @@ class CreateLinearDimensionInput(BaseModel):
     y2: float
     dim_x: float
     dim_y: float
+    direction: str | None = None
     layer: str = "0"
 
 

@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-777%20unit%20%2B%20222%20integration-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1060%20unit%20%2B%20189%20integration-green.svg)]()
 
-**MCP server for nanoCAD 26 automation** — 183 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
+**MCP server for nanoCAD 26 automation** — 208 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
 
 Works via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) with any MCP client: opencode, Claude Desktop, Cursor, and more.
 
@@ -13,7 +13,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (183 tools)
+Python MCP Server (208 tools)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -50,7 +50,7 @@ nanoCAD — drawing
 | NURBS / IFC | 5 | NURBS curves, surfaces, IFC import/export |
 | MultiCAD API | 12 | grid axes, rooms, parametric objects, reactors |
 | Other | 12 | mesh, selection, trim, extend, offset, viewport, render |
-| **TOTAL** | **183** | |
+| **TOTAL** | **208** | |
 
 ## 🚀 Quick Start
 
@@ -92,8 +92,11 @@ F:\full\path\to\nanoCAD-MCP\engine\dist\CadEngine.Plugin.dll
 
 # Terminal 2: Start MCP server
 cd server
-py -m src.presentation.server
+py -u -m src.presentation.server
 ```
+
+> **Important:** The `-u` flag (unbuffered stdout) is required on Windows.
+> Without it, the MCP client will not receive responses due to stdout buffering.
 
 ### 5. Connect MCP Client
 
@@ -102,9 +105,9 @@ py -m src.presentation.server
 {
   "mcp": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
-      "cwd": "F:\\nanoCAD\\server"
+      "command": ["python", "-u", "-m", "src.presentation.server"],
+      "cwd": "F:\\nanoCAD\\server",
+      "environment": { "PYTHONPATH": "F:\\nanoCAD\\server" }
     }
   }
 }
@@ -115,8 +118,8 @@ py -m src.presentation.server
 {
   "mcpServers": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
+      "command": "python",
+      "args": ["-u", "-m", "src.presentation.server"],
       "cwd": "F:\\nanoCAD\\server"
     }
   }
@@ -128,8 +131,8 @@ py -m src.presentation.server
 {
   "mcpServers": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
+      "command": "python",
+      "args": ["-u", "-m", "src.presentation.server"],
       "cwd": "F:\\nanoCAD\\server"
     }
   }
@@ -149,36 +152,31 @@ py server\scripts\demo_lite.py
 ## 🔧 Commands
 
 ```powershell
-# Start server
-py -m src.presentation.server
-py -m src.presentation.server --transport sse --port 8081   # remote access
+# Start server (-u required on Windows)
+py -u -m src.presentation.server
+py -u -m src.presentation.server --transport sse --port 8081   # remote access
 
 # Tests
-py -m pytest server/tests/ -v                              # all
-py -m pytest server/tests/unit/ -v --cov=src               # unit + coverage
-py -m pytest server/tests/integration/ -v                  # integration
+py -m pytest server/tests/ -v -q                              # all
+py -m pytest server/tests/unit/ --cov=src                     # unit + coverage
+py -m pytest server/tests/integration/ -v                     # integration
 
 # Linting
 py -m ruff check server/src/
 py -m ruff format server/src/
 py -m mypy server/src/
-
-# Demo scripts
-py server/scripts/demo_lite.py
-py server/scripts/demo_engineering_project.py
-py server/scripts/demo_bracket.py
 ```
 
 ## 🧪 Test Status
 
 | Test Type | Count | Status |
 |-----------|:-----:|:------:|
-| Unit tests (mocked HTTP) | 777 | ✅ Pass |
-| Integration (live nanoCAD) | 189 (+33 skipped) | ✅ Pass |
-| MCP server (full chain) | 51 | ✅ Pass |
-| Types (mypy --strict) | 17 files | ✅ Clean |
-| Linter (ruff) | — | ✅ Clean |
-| Python code coverage | 81% | ✅ |
+| Unit tests | 1060 | ✅ Pass |
+| Integration (live nanoCAD) | 189 (+257 skipped) | ✅ Pass |
+| Types (mypy --strict) | 0 errors | ✅ Clean |
+| Linter (ruff) | 0 errors | ✅ Clean |
+| Python code coverage | 88% | ✅ |
+| MCP E2E (init → list → call) | 3/3 steps | ✅ |
 
 ## 🔌 Architecture
 
@@ -187,7 +185,7 @@ server/src/
 ├── domain/              # Entities, Value Objects, ports (ICadRepository)
 ├── application/         # Use cases, DTO, business logic
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback), SafeBridge
-└── presentation/        # MCP server (stdio/SSE), 183 tool definitions
+└── presentation/        # MCP server (stdio/SSE), 208 tool definitions
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# services (EntityService, SolidService, SymbolService ...)

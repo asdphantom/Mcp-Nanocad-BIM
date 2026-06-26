@@ -629,6 +629,93 @@ class TestMCPServerCallTool:
             assert "ОШИБКА" not in hatch_text, f"create_hatch failed: {hatch_text}"
 
 
+# ── Test: 3D Solid Ops (sweep, loft, fillet, chamfer, move) ──────────────────
+
+
+@pytest.mark.skipif(not LIVE, reason=skip_reason)
+class TestMCP3DSolidOps:
+    """3D solid operations: sweep, loft, fillet, chamfer, move."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, srv_module: Any) -> None:
+        srv_module._ensure_connected()
+        self.routing = srv_module._build_routing()
+
+    def _call(self, tool: str, **kwargs: Any) -> Any:
+        handler = self.routing.get(tool)
+        assert handler is not None, f"Handler not found: {tool}"
+        return handler(**kwargs)
+
+    def test_sweep_solid(self) -> None:
+        """Sweep a circle along a path."""
+        result = self._call("sweep_solid", profile_handle="CIRCLE_1", path_handle="LINE_1")
+        # Stub may return False — just ensure no crash
+        assert isinstance(result, bool)
+
+    def test_loft_solid(self) -> None:
+        """Loft between sections."""
+        result = self._call("loft_solid", section_handles=["SEC1", "SEC2"])
+        assert isinstance(result, bool)
+
+    def test_fillet_edge(self) -> None:
+        """Fillet edge on a solid."""
+        result = self._call("fillet_edge", handle="BOX_1", radius=5.0)
+        assert result is None or isinstance(result, str)
+
+    def test_chamfer_edge(self) -> None:
+        """Chamfer edge on a solid."""
+        result = self._call("chamfer_edge", handle="BOX_1", dist1=3.0, dist2=3.0)
+        assert result is None or isinstance(result, str)
+
+    def test_move_solid(self) -> None:
+        """Move a solid by delta."""
+        result = self._call("move_solid", handle="BOX_1", dx=50, dy=50, dz=0)
+        assert isinstance(result, bool)
+
+    def test_set_3d_view_isometric(self) -> None:
+        """Set 3D view to isometric."""
+        result = self._call("set_3d_view", direction="isometric", render_mode="wireframe")
+        assert isinstance(result, bool)
+
+    def test_set_3d_view_realistic(self) -> None:
+        """Set 3D view to realistic."""
+        result = self._call("set_3d_view", direction="top", render_mode="realistic")
+        assert isinstance(result, bool)
+
+
+# ── Test: Trim / Extend / Offset via MCP ────────────────────────────────────
+
+
+@pytest.mark.skipif(not LIVE, reason=skip_reason)
+class TestMCPTransformationsExtended:
+    """Extended transformation tests for new Phase C3 routes."""
+
+    @pytest.fixture(autouse=True)
+    def _setup(self, srv_module: Any) -> None:
+        srv_module._ensure_connected()
+        self.routing = srv_module._build_routing()
+
+    def _call(self, tool: str, **kwargs: Any) -> Any:
+        handler = self.routing.get(tool)
+        assert handler is not None, f"Handler not found: {tool}"
+        return handler(**kwargs)
+
+    def test_trim_entity(self) -> None:
+        """Trim a line at a point."""
+        result = self._call("trim_entity", handle="LINE_1", cut_x=50, cut_y=0, keep_start=True)
+        assert isinstance(result, dict)
+
+    def test_extend_entity(self) -> None:
+        """Extend a line to a point."""
+        result = self._call("extend_entity", handle="LINE_1", end_x=100, end_y=0)
+        assert isinstance(result, bool)
+
+    def test_offset_entity(self) -> None:
+        """Offset a line by a distance."""
+        result = self._call("offset_entity", handle="LINE_1", distance=20)
+        assert isinstance(result, (dict, type(None)))
+
+
 # ── Test: Graceful Degradation ────────────────────────────────────────────────
 
 

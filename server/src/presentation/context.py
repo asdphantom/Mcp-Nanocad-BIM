@@ -27,7 +27,6 @@ def get_repository() -> CadRepository:
         from src.infrastructure.cad_repository import CadRepository
 
         repo = CadRepository()
-        repo.connect()
         _repo_var.set(repo)
     return repo
 

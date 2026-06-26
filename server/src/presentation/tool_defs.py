@@ -1,4 +1,4 @@
-"""Declarative definitions for all 183 MCP tools.
+"""Declarative definitions for all 207 MCP tools.
 
 Each tool is defined as a dict with name, description, properties, and required fields.
 Handlers are bound at runtime by _bind_handlers() after use case initialization.
@@ -8,12 +8,12 @@ from __future__ import annotations
 
 from typing import Any
 
-# Type aliases for brevity
-S = "string"
-N = "number"
-B = "boolean"
-I = "integer"
-OBJ = "object"
+# Type aliases for brevity — used inline in ~200+ property schemas
+S: str = "string"
+N: str = "number"
+B: str = "boolean"
+I: str = "integer"
+OBJ: str = "object"
 S2: dict[str, str] = {"type": S}
 
 # ── Mode classification for capability discovery ──────────────
@@ -24,6 +24,26 @@ S2: dict[str, str] = {"type": S}
 _OFFLINE_TOOLS: set[str] = {
     "health_check",
     "get_system_info",
+    # Parametric design tools (server-side only, no CAD needed)
+    "set_parameter",
+    "get_parameter",
+    "list_parameters",
+    "delete_parameter",
+    "evaluate_expression",
+    "resolve_value",
+    "load_design_table",
+    "apply_design_row",
+    # History / model regeneration (server-side, no CAD needed)
+    "record_tool_call",
+    "get_history",
+    "delete_history_entry",
+    "clear_history",
+    "replay_history",
+    # Configuration management (server-side, no CAD needed)
+    "save_configuration",
+    "load_configuration",
+    "list_configurations",
+    "delete_configuration",
 }
 
 _COM_TOOLS: set[str] = {
@@ -131,6 +151,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "y": {"type": N},
             "content": {"type": S},
             "height": {"type": N},
+            "rotation": {"type": N},
             "layer": S2,
         },
         "required": ["x", "y", "content", "height"],
@@ -702,6 +723,21 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "required": ["handle", "dx", "dy"],
     },
     {
+        "name": "rotate_solid",
+        "description": "Rotate a 3D solid around an axis (requires .NET engine)",
+        "properties": {
+            "handle": S2,
+            "angle": {"type": N},
+            "center_x": {"type": N},
+            "center_y": {"type": N},
+            "center_z": {"type": N},
+            "axis_x": {"type": N},
+            "axis_y": {"type": N},
+            "axis_z": {"type": N},
+        },
+        "required": ["handle", "angle", "center_x", "center_y", "center_z", "axis_x", "axis_y", "axis_z"],
+    },
+    {
         "name": "set_3d_view",
         "description": "Set 3D view direction",
         "properties": {"direction": S2, "render_mode": S2},
@@ -900,6 +936,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "y2": S2,
             "dim_x": S2,
             "dim_y": S2,
+            "layer": S2,
         },
         "required": ["x1", "y1", "x2", "y2", "dim_x", "dim_y"],
     },
@@ -914,19 +951,20 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "dim_x": S2,
             "dim_y": S2,
             "rotation": S2,
+            "layer": S2,
         },
         "required": ["x1", "y1", "x2", "y2", "dim_x", "dim_y", "rotation"],
     },
     {
         "name": "create_radial_dimension",
         "description": "Create radial dimension",
-        "properties": {"center_x": S2, "center_y": S2, "arc_x": S2, "arc_y": S2},
+        "properties": {"center_x": S2, "center_y": S2, "arc_x": S2, "arc_y": S2, "layer": S2},
         "required": ["center_x", "center_y", "arc_x", "arc_y"],
     },
     {
         "name": "create_diametric_dimension",
         "description": "Create diametric dimension",
-        "properties": {"center_x": S2, "center_y": S2, "arc_x": S2, "arc_y": S2},
+        "properties": {"center_x": S2, "center_y": S2, "arc_x": S2, "arc_y": S2, "layer": S2},
         "required": ["center_x", "center_y", "arc_x", "arc_y"],
     },
     {
@@ -939,6 +977,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "p1_y": S2,
             "p2_x": S2,
             "p2_y": S2,
+            "layer": S2,
         },
         "required": ["center_x", "center_y", "p1_x", "p1_y", "p2_x", "p2_y"],
     },
@@ -965,6 +1004,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "dim_x": {"type": N},
             "dim_y": {"type": N},
             "direction": S2,
+            "layer": S2,
         },
         "required": ["x1", "y1", "x2", "y2", "dim_x", "dim_y"],
     },
@@ -972,22 +1012,29 @@ TOOL_DEFS: list[dict[str, Any]] = [
     {
         "name": "get_distance",
         "description": "Measure distance between two points",
-        "properties": {"x1": S2, "y1": S2, "z1": S2, "x2": S2, "y2": S2, "z2": S2},
+        "properties": {
+            "x1": {"type": N},
+            "y1": {"type": N},
+            "z1": {"type": N},
+            "x2": {"type": N},
+            "y2": {"type": N},
+            "z2": {"type": N},
+        },
         "required": ["x1", "y1", "x2", "y2"],
     },
     {
         "name": "get_angle",
         "description": "Measure angle between two lines defined by three points",
         "properties": {
-            "x1": S2,
-            "y1": S2,
-            "z1": S2,
-            "x2": S2,
-            "y2": S2,
-            "z2": S2,
-            "x3": S2,
-            "y3": S2,
-            "z3": S2,
+            "x1": {"type": N},
+            "y1": {"type": N},
+            "z1": {"type": N},
+            "x2": {"type": N},
+            "y2": {"type": N},
+            "z2": {"type": N},
+            "x3": {"type": N},
+            "y3": {"type": N},
+            "z3": {"type": N},
         },
         "required": ["x1", "y1", "x2", "y2", "x3", "y3"],
     },
@@ -1426,18 +1473,53 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "angle",
         ],
     },
+    # ── Feature Tree Management (Phase P2) ────────────────
+    {
+        "name": "get_feature_list",
+        "description": "Get list of parametric features on a 3D solid (requires .NET engine)",
+        "properties": {"solid_handle": {"type": S}},
+        "required": ["solid_handle"],
+    },
+    {
+        "name": "suppress_feature",
+        "description": "Suppress (disable) a parametric feature by handle (requires .NET engine)",
+        "properties": {"feature_handle": {"type": S}},
+        "required": ["feature_handle"],
+    },
+    {
+        "name": "unsuppress_feature",
+        "description": "Unsuppress (resume) a suppressed parametric feature (requires .NET engine)",
+        "properties": {"feature_handle": {"type": S}},
+        "required": ["feature_handle"],
+    },
+    {
+        "name": "edit_feature_parameter",
+        "description": "Edit a parameter of a parametric feature (requires .NET engine)",
+        "properties": {
+            "feature_handle": {"type": S},
+            "param_name": {"type": S},
+            "value": {"type": N},
+        },
+        "required": ["feature_handle", "param_name", "value"],
+    },
+    {
+        "name": "delete_feature",
+        "description": "Delete a parametric feature from the solid (requires .NET engine)",
+        "properties": {"feature_handle": {"type": S}},
+        "required": ["feature_handle"],
+    },
     # ── Helix ──────────────────────────────────────────────
     {
         "name": "create_helix",
         "description": "Create a helix/spiral (requires .NET engine)",
         "properties": {
-            "center_x": N,
-            "center_y": N,
-            "center_z": N,
-            "start_radius": N,
-            "end_radius": N,
-            "height": N,
-            "turns": N,
+            "center_x": {"type": N},
+            "center_y": {"type": N},
+            "center_z": {"type": N},
+            "start_radius": {"type": N},
+            "end_radius": {"type": N},
+            "height": {"type": N},
+            "turns": {"type": N},
             "layer": S2,
         },
         "required": [],
@@ -1456,8 +1538,8 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "name": "create_boundary",
         "description": "Create a boundary polyline around a point (requires .NET engine)",
         "properties": {
-            "point_x": N,
-            "point_y": N,
+            "point_x": {"type": N},
+            "point_y": {"type": N},
             "layer": S2,
         },
         "required": ["point_x", "point_y"],
@@ -1469,11 +1551,11 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "properties": {
             "color1": S2,
             "color2": S2,
-            "scale": N,
+            "scale": {"type": N},
             "gradient_type": S2,
             "boundary_handles": {"type": "array", "items": S2},
-            "point_xs": {"type": "array", "items": N},
-            "point_ys": {"type": "array", "items": N},
+            "point_xs": {"type": "array", "items": {"type": N}},
+            "point_ys": {"type": "array", "items": {"type": N}},
         },
         "required": [],
     },
@@ -1482,13 +1564,13 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "name": "create_arc_length_dimension",
         "description": "Create arc length dimension (requires .NET engine)",
         "properties": {
-            "center_x": N,
-            "center_y": N,
-            "radius": N,
-            "start_angle": N,
-            "end_angle": N,
-            "dim_x": N,
-            "dim_y": N,
+            "center_x": {"type": N},
+            "center_y": {"type": N},
+            "radius": {"type": N},
+            "start_angle": {"type": N},
+            "end_angle": {"type": N},
+            "dim_x": {"type": N},
+            "dim_y": {"type": N},
         },
         "required": [],
     },
@@ -1504,7 +1586,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "name": "create_mesh",
         "description": "Create a 3D mesh (SubDMesh) from vertices+faces (req .NET engine)",
         "properties": {
-            "vertices": {"type": "array", "items": {"type": "array", "items": N}},
+            "vertices": {"type": "array", "items": {"type": "array", "items": {"type": N}}},
             "face_indices": {"type": "array", "items": {"type": "integer"}},
             "smooth_level": {"type": "integer"},
             "layer": S2,
@@ -1516,7 +1598,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "description": "Edit mesh vertices or subdivide (requires .NET engine)",
         "properties": {
             "handle": S2,
-            "vertices": {"type": "array", "items": {"type": "array", "items": N}},
+            "vertices": {"type": "array", "items": {"type": "array", "items": {"type": N}}},
             "subdivide": {"type": "integer"},
         },
         "required": ["handle"],
@@ -1537,6 +1619,17 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "description": "Render the current scene (requires .NET engine)",
         "properties": {"output_file": S2},
         "required": [],
+    },
+    # ── Screenshot ──────────────────────────────────────────
+    {
+        "name": "screenshot",
+        "description": "Save EMF screenshot of current viewport to file",
+        "properties": {
+            "path": S2,
+            "width": {"type": I, "description": "Image width in pixels", "default": 1920},
+            "height": {"type": I, "description": "Image height in pixels", "default": 1080},
+        },
+        "required": ["path"],
     },
     # ── NURBS / IFC ──────────────────────────────────────────
     {
@@ -1707,10 +1800,126 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "properties": {"handle": S2},
         "required": ["handle"],
     },
+    # ── Parametric Design Tools (server-side, no CAD needed) ──
+    {
+        "name": "set_parameter",
+        "description": "Set a named parameter for parametric design (value, formula like =Width*2, or reference like *Thickness)",
+        "properties": {
+            "name": S2,
+            "value": {"type": "string"},
+            "description": S2,
+        },
+        "required": ["name", "value"],
+    },
+    {
+        "name": "get_parameter",
+        "description": "Get a named parameter's value and metadata",
+        "properties": {"name": S2},
+        "required": ["name"],
+    },
+    {
+        "name": "list_parameters",
+        "description": "List all named parameters with their resolved values and formulas",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "delete_parameter",
+        "description": "Delete a named parameter",
+        "properties": {"name": S2},
+        "required": ["name"],
+    },
+    {
+        "name": "evaluate_expression",
+        "description": "Evaluate a mathematical expression against current parameters (e.g. Width*2+10)",
+        "properties": {"expression": S2},
+        "required": ["expression"],
+    },
+    {
+        "name": "resolve_value",
+        "description": "Resolve a value (literal, *reference, or =formula) against current parameters",
+        "properties": {"raw": {"type": "string"}},
+        "required": ["raw"],
+    },
+    {
+        "name": "load_design_table",
+        "description": "Load a design table from CSV data (first row = parameter names, subsequent rows = configurations)",
+        "properties": {"csv_data": S2},
+        "required": ["csv_data"],
+    },
+    {
+        "name": "apply_design_row",
+        "description": "Apply a design table row as parameter values",
+        "properties": {
+            "row_index": {"type": N},
+            "rows_json": {"type": "array", "items": {"type": "object"}},
+        },
+        "required": ["row_index", "rows_json"],
+    },
+    # ── History / Model Regeneration (server-side, no CAD needed) ──
+    {
+        "name": "record_tool_call",
+        "description": "Record a tool call for later parametric replay",
+        "properties": {
+            "tool_name": S2,
+            "params": {"type": "object"},
+            "description": S2,
+        },
+        "required": ["tool_name"],
+    },
+    {
+        "name": "get_history",
+        "description": "Get recorded tool call history",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "delete_history_entry",
+        "description": "Delete a single history entry by ID",
+        "properties": {"entry_id": S2},
+        "required": ["entry_id"],
+    },
+    {
+        "name": "clear_history",
+        "description": "Clear all recorded tool call history",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "replay_history",
+        "description": "Replay all recorded tool calls with re-resolved parameter values",
+        "properties": {},
+        "required": [],
+    },
+    # ── Configuration Management (multi-variant design tables) ──
+    {
+        "name": "save_configuration",
+        "description": "Save all current parameter values as a named configuration (variant)",
+        "properties": {"name": S2},
+        "required": ["name"],
+    },
+    {
+        "name": "load_configuration",
+        "description": "Restore a named configuration as current parameter values (replaces all)",
+        "properties": {"name": S2},
+        "required": ["name"],
+    },
+    {
+        "name": "list_configurations",
+        "description": "List all saved configurations with their parameter values",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "delete_configuration",
+        "description": "Delete a named configuration",
+        "properties": {"name": S2},
+        "required": ["name"],
+    },
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 183, f"Expected 183 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 207, f"Expected 207 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

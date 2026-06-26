@@ -34,7 +34,7 @@ from src.domain.entities import (
 from src.domain.exceptions import NotSupportedError
 from src.domain.interfaces import ICadRepository
 from src.infrastructure.com_bridge import NanoCadComBridge
-from src.infrastructure.http_bridge import HttpCadBridge, validate_project_path
+from src.infrastructure.http_bridge import HttpCadBridge, validate_file_path, validate_project_path
 
 logger = logging.getLogger(__name__)
 
@@ -102,7 +102,7 @@ class CadRepository(ICadRepository):
 
     def get_system_info(self) -> CadSystemInfo:
         if self._mode == "full":
-            info = self._http.check_health()
+            info = self._http.get_system_info()
             if info:
                 return CadSystemInfo(
                     version=info.get("version", "unknown"),
@@ -475,7 +475,9 @@ class CadRepository(ICadRepository):
             f"/api/entity/{handle}/mirror",
             json_body={"p1_x": p1.x, "p1_y": p1.y, "p2_x": p2.x, "p2_y": p2.y},
         )
-        return result is not None
+        if result is None:
+            return False
+        return result.get("success", True)
 
     def set_entity_layer(self, handle: EntityHandle, layer: LayerName) -> bool:
         if self._mode == "full":
@@ -484,7 +486,9 @@ class CadRepository(ICadRepository):
                 f"/api/entity/{handle}/layer",
                 json_body={"layer": str(layer)},
             )
-            return result is not None
+            if result is None:
+                return False
+            return result.get("success", True)
         msg = "Set layer via COM not implemented"
         raise NotSupportedError(msg)
 
@@ -494,12 +498,13 @@ class CadRepository(ICadRepository):
         if self._mode != "full":
             msg = "Query by type requires .NET engine"
             raise NotSupportedError(msg)
-        params: dict[str, Any] = {"entity_type": entity_type}
+        params: dict[str, Any] = {"entity_type": entity_type, "max_count": 1000}
         if layer:
             params["layer"] = str(layer)
-        result = self._http._request("POST", "/api/entity/query/by-type", json_body=params)
-        if result and "entities" in result:
-            return [CadEntity.model_validate(e) for e in result["entities"]]
+        if self._http:
+            result = self._http._request("POST", "/api/selection/select", json_body=params)
+            if result and "entities" in result:
+                return [CadEntity.model_validate(e) for e in result["entities"]]
         return []
 
     # ── Layer Management ───────────────────────────────────────
@@ -552,7 +557,9 @@ class CadRepository(ICadRepository):
     def delete_layer(self, name: LayerName) -> bool:
         if self._mode == "full":
             result = self._http._request("DELETE", f"/api/layer/{name}")
-            return result is not None
+            if result is None:
+                return False
+            return result.get("success", True)
         msg = "Delete layer via COM not implemented"
         raise NotSupportedError(msg)
 
@@ -581,20 +588,21 @@ class CadRepository(ICadRepository):
         if self._mode != "full":
             msg = "Block creation requires .NET engine"
             raise NotSupportedError(msg)
-        self._http._request("POST", "/api/block", json_body=block.model_dump())
+        self._http._request("POST", "/api/block/create", json_body=block.model_dump())
 
     def insert_block(self, block_ref: CadBlockRef) -> EntityHandle:
         if self._mode != "full":
             msg = "Block insertion requires .NET engine"
             raise NotSupportedError(msg)
-        result = self._http._request(
-            "POST",
-            f"/api/block/{block_ref.block_name}/insert",
-            json_body=block_ref.model_dump(),
+        handle = self._http.insert_block(
+            name=str(block_ref.block_name),
+            x=block_ref.insertion.x,
+            y=block_ref.insertion.y,
+            scale=block_ref.scale_x,
+            rotation=block_ref.rotation,
         )
-        h = self._to_handle(result.get("handle") if isinstance(result, dict) else None)
-        if h:
-            return h
+        if handle:
+            return EntityHandle(value=handle)
         msg = "Failed to insert block"
         raise RuntimeError(msg)
 
@@ -612,7 +620,9 @@ class CadRepository(ICadRepository):
             msg = "Block deletion requires .NET engine"
             raise NotSupportedError(msg)
         result = self._http._request("DELETE", f"/api/block/{name}")
-        return result is not None
+        if result is None:
+            return False
+        return result.get("success", True)
 
     def get_block_entities(self, name: str) -> list[dict[str, Any]]:
         if self._mode != "full":
@@ -662,13 +672,21 @@ class CadRepository(ICadRepository):
         if self._mode != "full":
             msg = "DWG export requires .NET engine"
             raise NotSupportedError(msg)
-        self._http._request("POST", "/api/document/export/dwg", json_body={"path": path})
+        safe = validate_file_path(path)
+        self._http._request("POST", "/api/document/export/dwg", json_body={"path": safe})
 
     def export_dxf(self, path: str) -> None:
         if self._mode != "full":
             msg = "DXF export requires .NET engine"
             raise NotSupportedError(msg)
-        self._http._request("POST", "/api/document/export/dxf", json_body={"path": path})
+        safe = validate_file_path(path)
+        self._http._request("POST", "/api/document/export/dxf", json_body={"path": safe})
+
+    def screenshot(self, path: str, width: int = 1920, height: int = 1080) -> bool:
+        if self._mode != "full":
+            msg = "Screenshot requires .NET engine"
+            raise NotSupportedError(msg)
+        return self._http.screenshot(path=path, width=width, height=height)
 
     def zoom_extents(self) -> None:
         if self._mode == "full":
@@ -727,7 +745,8 @@ class CadRepository(ICadRepository):
         if self._mode != "full":
             msg = "Open document requires .NET engine"
             raise NotSupportedError(msg)
-        self._http._request("POST", "/api/document/open", json_body={"path": path})
+        safe = validate_file_path(path)
+        self._http._request("POST", "/api/document/open", json_body={"path": safe})
 
     def close_document(self) -> None:
         if self._mode != "full":
@@ -756,6 +775,7 @@ class CadRepository(ICadRepository):
     def set_system_variable(self, name: str, value: str) -> None:
         if self._mode == "full":
             self._http.set_system_variable(name, value)
+            return
         self._com.com_set_system_variable(name, value)
 
     # ── Extended HTTP-only operations ──────────────────────
@@ -874,6 +894,16 @@ class CadRepository(ICadRepository):
             raise NotSupportedError(msg)
         return self._http.revolve_solid(handle, axis_x, axis_y, axis_z, dir_x, dir_y, dir_z, angle)
 
+    def rotate_solid(
+        self, handle: str, angle: float,
+        cx: float = 0, cy: float = 0, cz: float = 0,
+        ax: float = 0, ay: float = 0, az: float = 1,
+    ) -> bool:
+        if self._mode != "full":
+            msg = "Rotate solid requires .NET engine"
+            raise NotSupportedError(msg)
+        return self._http.rotate_solid(handle, angle, cx, cy, cz, ax, ay, az)
+
     def move_solid(self, handle: str, dx: float, dy: float, dz: float = 0) -> bool:
         if self._mode != "full":
             msg = "Move solid requires .NET engine"
@@ -915,7 +945,9 @@ class CadRepository(ICadRepository):
             msg = "NURBS modification requires .NET engine"
             raise NotSupportedError(msg)
         result = self._http.modify_nurb(**request.model_dump())
-        return result is not None
+        if result is None:
+            return False
+        return result.get("success", True)
 
     def import_ifc(self, path: str) -> bool:
         if self._mode != "full":

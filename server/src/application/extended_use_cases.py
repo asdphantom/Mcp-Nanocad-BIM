@@ -1075,6 +1075,48 @@ class FeatureUseCase:
             angle=kwargs.get("angle", 360),
         )
 
+    # ── Feature Tree Management (Phase P2) ──────────────────────
+
+    def get_feature_list(self, **kwargs: Any) -> Any:
+        """Get list of parametric features on a 3D solid.
+
+        Each feature includes type, handle, suppressed status, and parameters.
+        """
+        self._require_http()
+        return self._http.get_feature_list(  # type: ignore[union-attr]
+            solid_handle=kwargs.get("solid_handle", ""),
+        )
+
+    def suppress_feature(self, **kwargs: Any) -> Any:
+        """Suppress (disable) a parametric feature by handle."""
+        self._require_http()
+        return self._http.suppress_feature(  # type: ignore[union-attr]
+            feature_handle=kwargs.get("feature_handle", ""),
+        )
+
+    def unsuppress_feature(self, **kwargs: Any) -> Any:
+        """Unsuppress (resume) a suppressed parametric feature."""
+        self._require_http()
+        return self._http.unsuppress_feature(  # type: ignore[union-attr]
+            feature_handle=kwargs.get("feature_handle", ""),
+        )
+
+    def edit_feature_parameter(self, **kwargs: Any) -> Any:
+        """Edit a parameter of a parametric feature."""
+        self._require_http()
+        return self._http.edit_feature_parameter(  # type: ignore[union-attr]
+            feature_handle=kwargs.get("feature_handle", ""),
+            param_name=kwargs.get("param_name", ""),
+            value=kwargs.get("value", 0),
+        )
+
+    def delete_feature(self, **kwargs: Any) -> Any:
+        """Delete a parametric feature from the solid."""
+        self._require_http()
+        return self._http.delete_feature(  # type: ignore[union-attr]
+            feature_handle=kwargs.get("feature_handle", ""),
+        )
+
 
 class NurbIfcUseCase:
     """Use case: NURBS curve/surface creation and IFC import."""

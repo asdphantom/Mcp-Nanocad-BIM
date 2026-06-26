@@ -74,7 +74,8 @@ namespace CadEngine.Services
                 hole.Diameter = diameter;
                 hole.Depth = depth;
                 McObjectManager.UpdateAll();
-                return new { success = true };
+                var hSimple = HandleFromId(hole.ID) ?? "";
+                return new { success = true, handle = hSimple };
             }
             catch (Exception ex) { return Error(ex.Message); }
         }
@@ -105,7 +106,8 @@ namespace CadEngine.Services
                 hole.Diameter = diameter;
                 hole.Depth = depth;
                 McObjectManager.UpdateAll();
-                return new { success = true };
+                var hThreaded = HandleFromId(hole.ID) ?? "";
+                return new { success = true, handle = hThreaded };
             }
             catch (Exception ex) { return Error(ex.Message); }
         }
@@ -135,7 +137,8 @@ namespace CadEngine.Services
                 hole.Diameter = diameter;
                 hole.Depth = depth;
                 McObjectManager.UpdateAll();
-                return new { success = true };
+                var hStandard = HandleFromId(hole.ID) ?? "";
+                return new { success = true, handle = hStandard };
             }
             catch (Exception ex) { return Error(ex.Message); }
         }
@@ -336,6 +339,281 @@ namespace CadEngine.Services
                 McObjectManager.UpdateAll();
                 var handle = HandleFromId(feature.ID);
                 return new { success = true, handle = handle ?? "" };
+            }
+            catch (Exception ex) { return Error(ex.Message); }
+        }
+
+        // ── Shell Feature (stub — not supported in Free) ──
+        public object CreateShell(string solidHandle, double thickness, bool outward)
+            => new { success = false, error = "Shell not supported in this edition" };
+
+        // ── Circular Pattern Feature (stub — not supported in Free) ──
+        public object CreateCircularPattern(string solidHandle, string featureHandle, int count, double angle)
+            => new { success = false, error = "Circular pattern not supported in this edition" };
+
+        // ── Feature Tree Management (Phase P2) ──────────────────
+
+        public object GetFeatureList(string solidHandle)
+        {
+            var solid = GetSolid(solidHandle);
+            if (solid == null) return Error("Solid not found");
+
+            try
+            {
+                var history = McDocumentsManager.GetActiveSheet()?.Get3dHistory();
+                if (history == null) return Error("No 3D history available");
+
+                var children = history.GetChildrenForItem(solid.ID, false);
+                var features = new List<object>();
+
+                if (children != null)
+                {
+                    foreach (var childId in children)
+                    {
+                        var obj = childId.GetObject();
+                        if (obj == null) continue;
+
+                        var handleStr = HandleFromId(childId) ?? "";
+                        string typeName = obj.GetType().Name;
+                        bool suppressed = false;
+
+                        // Try to extract common properties
+                        try
+                        {
+                            var type = obj.GetType();
+                            var suppressProp = type.GetProperty("Suppress");
+                            if (suppressProp != null)
+                                suppressed = (bool)(suppressProp.GetValue(obj) ?? false);
+                        }
+                        catch { }
+
+                        var entry = new System.Dynamic.ExpandoObject() as IDictionary<string, object>;
+                        entry["handle"] = handleStr;
+                        entry["type"] = typeName;
+                        entry["suppressed"] = suppressed;
+
+                        // Try to extract known feature properties (diameter, depth, height, etc.)
+                        try
+                        {
+                            var type = obj.GetType();
+                            foreach (var prop in type.GetProperties())
+                            {
+                                if (prop.Name == "Suppress" || prop.Name == "ID" || prop.Name == "DbEntity")
+                                    continue;
+                                if (prop.PropertyType == typeof(double) || prop.PropertyType == typeof(int) || prop.PropertyType == typeof(string))
+                                {
+                                    entry[prop.Name] = prop.GetValue(obj)?.ToString() ?? "";
+                                }
+                            }
+                        }
+                        catch { }
+
+                        features.Add(entry);
+                    }
+                }
+
+                return new { success = true, features };
+            }
+            catch (Exception ex) { return Error(ex.Message); }
+        }
+
+        public object SuppressFeature(string featureHandle)
+        {
+            try
+            {
+                var id = IdFromHandle(featureHandle);
+                var obj = id.GetObject();
+                if (obj == null) return Error("Feature not found");
+
+                var type = obj.GetType();
+
+                // Try known suppress property names (case-insensitive)
+                foreach (var propName in new[] { "Suppress", "Suppressed", "IsSuppressed", "Status" })
+                {
+                    var prop = type.GetProperty(propName,
+                        System.Reflection.BindingFlags.Instance |
+                        System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.IgnoreCase);
+                    if (prop != null && prop.PropertyType == typeof(bool))
+                    {
+                        prop.SetValue(obj, true);
+                        McObjectManager.UpdateAll();
+                        return new { success = true };
+                    }
+                }
+
+                // Try method named "SetSuppress" or "Suppress"
+                foreach (var methodName in new[] { "SetSuppress", "Suppress" })
+                {
+                    var method = type.GetMethod(methodName, new Type[] { typeof(bool) });
+                    if (method != null)
+                    {
+                        method.Invoke(obj, new object[] { true });
+                        McObjectManager.UpdateAll();
+                        return new { success = true };
+                    }
+                }
+
+                return Error("Feature does not support suppress (no bool Suppress/Suppressed property found)");
+            }
+            catch (Exception ex) { return Error(ex.Message); }
+        }
+
+        public object UnsuppressFeature(string featureHandle)
+        {
+            try
+            {
+                var id = IdFromHandle(featureHandle);
+                var obj = id.GetObject();
+                if (obj == null) return Error("Feature not found");
+
+                var type = obj.GetType();
+
+                // Try known suppress property names (case-insensitive)
+                foreach (var propName in new[] { "Suppress", "Suppressed", "IsSuppressed", "Status" })
+                {
+                    var prop = type.GetProperty(propName,
+                        System.Reflection.BindingFlags.Instance |
+                        System.Reflection.BindingFlags.Public |
+                        System.Reflection.BindingFlags.IgnoreCase);
+                    if (prop != null && prop.PropertyType == typeof(bool))
+                    {
+                        prop.SetValue(obj, false);
+                        McObjectManager.UpdateAll();
+                        return new { success = true };
+                    }
+                }
+
+                // Try method named "SetSuppress" or "Unsuppress"
+                foreach (var methodName in new[] { "SetSuppress", "Unsuppress" })
+                {
+                    var method = type.GetMethod(methodName, new Type[] { typeof(bool) });
+                    if (method != null)
+                    {
+                        method.Invoke(obj, new object[] { false });
+                        McObjectManager.UpdateAll();
+                        return new { success = true };
+                    }
+                }
+
+                return Error("Feature does not support unsuppress");
+            }
+            catch (Exception ex) { return Error(ex.Message); }
+        }
+
+        public object EditFeatureParameter(string featureHandle, string paramName, double value)
+        {
+            try
+            {
+                var id = IdFromHandle(featureHandle);
+                var obj = id.GetObject();
+                if (obj == null) return Error("Feature not found");
+
+                var type = obj.GetType();
+                // Case-insensitive property lookup — feature properties
+                // use PascalCase (e.g. "Diameter") while Python sends
+                // snake_case or lowercase param names
+                var prop = type.GetProperty(paramName,
+                    System.Reflection.BindingFlags.Instance |
+                    System.Reflection.BindingFlags.Public |
+                    System.Reflection.BindingFlags.IgnoreCase);
+                if (prop == null) return Error($"Parameter '{paramName}' not found on feature type {type.Name}");
+
+                if (prop.PropertyType == typeof(double))
+                    prop.SetValue(obj, value);
+                else if (prop.PropertyType == typeof(int))
+                    prop.SetValue(obj, (int)value);
+                else
+                    return Error($"Parameter '{paramName}' type {prop.PropertyType.Name} not supported");
+
+                McObjectManager.UpdateAll();
+                return new { success = true };
+            }
+            catch (Exception ex) { return Error(ex.Message); }
+        }
+
+        public object DeleteFeature(string featureHandle)
+        {
+            try
+            {
+                var id = IdFromHandle(featureHandle);
+                var obj = id.GetObject();
+                if (obj == null) return Error("Feature not found");
+                var type = obj.GetType();
+
+                // 1. Try DbEntity.Erase()
+                var dbEntityProp = type.GetProperty("DbEntity");
+                if (dbEntityProp != null)
+                {
+                    var dbEnt = dbEntityProp.GetValue(obj);
+                    if (dbEnt != null)
+                    {
+                        var eraseMethod = dbEnt.GetType().GetMethod("Erase", new Type[] { typeof(bool) });
+                        if (eraseMethod != null)
+                        {
+                            eraseMethod.Invoke(dbEnt, new object[] { false });
+                            McObjectManager.UpdateAll();
+                            return new { success = true };
+                        }
+                    }
+                }
+
+                // 2. Try direct Erase(bool)
+                var eraseDirect = type.GetMethod("Erase", new Type[] { typeof(bool) });
+                if (eraseDirect != null)
+                {
+                    eraseDirect.Invoke(obj, new object[] { false });
+                    McObjectManager.UpdateAll();
+                    return new { success = true };
+                }
+
+                // 3. Try database EraseObject
+                try
+                {
+                    var hostAppType = Type.GetType("Multicad.DatabaseServices.HostApplicationServices, hostmgd");
+                    if (hostAppType != null)
+                    {
+                        var workingDbProp = hostAppType.GetProperty("WorkingDatabase",
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
+                        if (workingDbProp != null)
+                        {
+                            var db = workingDbProp.GetValue(null);
+                            if (db != null)
+                            {
+                                var eraseObjMethod = db.GetType().GetMethod("EraseObject",
+                                    new Type[] { typeof(McObjectId) });
+                                if (eraseObjMethod != null)
+                                {
+                                    eraseObjMethod.Invoke(db, new object[] { id });
+                                    McObjectManager.UpdateAll();
+                                    return new { success = true };
+                                }
+                            }
+                        }
+                    }
+                }
+                catch { }
+
+                // 4. Try getting solid parent and removing feature from its history
+                try
+                {
+                    var history = McDocumentsManager.GetActiveSheet()?.Get3dHistory();
+                    if (history != null)
+                    {
+                        var historyType = history.GetType();
+                        var removeMethod = historyType.GetMethod("RemoveItem",
+                            new Type[] { typeof(McObjectId) });
+                        if (removeMethod != null)
+                        {
+                            removeMethod.Invoke(history, new object[] { id });
+                            McObjectManager.UpdateAll();
+                            return new { success = true };
+                        }
+                    }
+                }
+                catch { }
+
+                return Error("Cannot delete feature: no erase method available");
             }
             catch (Exception ex) { return Error(ex.Message); }
         }

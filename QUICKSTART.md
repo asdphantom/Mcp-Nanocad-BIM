@@ -51,8 +51,11 @@ CadEngine.Plugin=F:\nanoCAD-MCP\engine\dist\CadEngine.Plugin.dll
 
 # Терминал 2 — MCP сервер
 cd F:\nanoCAD-MCP\server
-py -m src.presentation.server
+py -u -m src.presentation.server
 ```
+
+> **Важно:** флаг `-u` (unbuffered stdout) обязателен на Windows.
+> Без него MCP-клиент не получит ответ от сервера из-за буферизации вывода.
 
 ## 5. Проверка
 
@@ -88,9 +91,9 @@ save_document(path="C:/Temp/my_first.dwg")                    # сохранит
 {
   "mcp": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
-      "cwd": "F:\\nanoCAD-MCP\\server"
+      "command": ["python", "-u", "-m", "src.presentation.server"],
+      "cwd": "F:\\nanoCAD-MCP\\server",
+      "environment": { "PYTHONPATH": "F:\\nanoCAD\\server" }
     }
   }
 }
@@ -101,8 +104,8 @@ save_document(path="C:/Temp/my_first.dwg")                    # сохранит
 {
   "mcpServers": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
+      "command": "python",
+      "args": ["-u", "-m", "src.presentation.server"],
       "cwd": "F:\\nanoCAD-MCP\\server"
     }
   }

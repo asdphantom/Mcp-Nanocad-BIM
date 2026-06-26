@@ -189,6 +189,9 @@ class ICadRepository(ABC):
     def export_dxf(self, path: str) -> None: ...
 
     @abstractmethod
+    def screenshot(self, path: str, width: int = 1920, height: int = 1080) -> bool: ...
+
+    @abstractmethod
     def zoom_extents(self) -> None: ...
 
     @abstractmethod
@@ -317,6 +320,13 @@ class ICadRepository(ABC):
         dir_z: float = 1,
         angle: float = 360,
     ) -> str | None: ...
+
+    @abstractmethod
+    def rotate_solid(
+        self, handle: str, angle: float,
+        cx: float = 0, cy: float = 0, cz: float = 0,
+        ax: float = 0, ay: float = 0, az: float = 1,
+    ) -> bool: ...
 
     @abstractmethod
     def move_solid(

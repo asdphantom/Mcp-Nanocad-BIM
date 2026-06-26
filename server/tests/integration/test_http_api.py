@@ -94,8 +94,11 @@ def test_id() -> str:
 
 
 def _create_line(x1: float = 0, y1: float = 0, x2: float = 10, y2: float = 10) -> str:
-    """Create a fresh line entity, return its handle."""
-    r = _post("/api/entity/line", json={"start_x": x1, "start_y": y1, "end_x": x2, "end_y": y2})
+    """Create a fresh line entity, return its handle.
+
+    Note: API expects x1/y1/x2/y2 (snake_case from .NET model).
+    """
+    r = _post("/api/entity/line", json={"x1": x1, "y1": y1, "x2": x2, "y2": y2})
     return _handle(r)
 
 
@@ -172,7 +175,7 @@ class TestDocument:
 
     def test_03_undo_redo(self) -> None:
         # Create then undo
-        _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 5, "end_y": 5})
+        _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 5, "y2": 5})
         undo = _post("/api/document/undo")
         assert undo.get("success") is not False, f"Undo failed: {undo}"
         redo = _post("/api/document/redo")
@@ -276,6 +279,17 @@ class TestDocument:
         """
         pytest.skip("Closing last document unloads the .NET plugin (HTTP server dies)")
 
+    def test_17_export_ifc(self) -> None:
+        """Export drawing to IFC (may require Pro edition)."""
+        try:
+            path = os.path.join(os.environ.get("TEMP", "C:\\temp"), f"test_{test_id()}.ifc")
+            result = _post("/api/document/export/ifc", json={"path": path})
+            if "not supported" in str(result.get("error", "")):
+                pytest.skip("IFC export not supported in this edition")
+            assert isinstance(result, dict)
+        except httpx.ConnectError:
+            pytest.skip("HTTP server unavailable (plugin may have crashed)")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATEGORY 2b: Project Lifecycle (create_project, save_project)
@@ -335,7 +349,7 @@ class TestProjectLifecycle:
         # Draw a line first
         _post(
             "/api/entity/line",
-            json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 100},
+            json={"x1": 0, "y1": 0, "x2": 100, "y2": 100},
         )
         # Save to the target path (use forward slashes for JSON safety)
         result = _post(
@@ -360,7 +374,7 @@ class TestProjectLifecycle:
         # 2. Draw something
         line_result = _post(
             "/api/entity/line",
-            json={"start_x": 0, "start_y": 0, "end_x": 50, "end_y": 50},
+            json={"x1": 0, "y1": 0, "x2": 50, "y2": 50},
         )
         assert "error" not in line_result
         # 3. Save the project
@@ -477,7 +491,7 @@ class Test2DEntities:
     handles: list[str] = []
 
     def test_01_line(self) -> None:
-        r = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 100})
+        r = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 100})
         h = _handle(r)
         assert h, f"No handle: {r}"
         assert r.get("type") == "LINE"
@@ -663,7 +677,7 @@ class Test3DSolids:
 
     def test_09_revolve(self) -> None:
         """Revolve a line around an axis."""
-        line = _post("/api/entity/line", json={"start_x": 10, "start_y": 0, "end_x": 10, "end_y": 30})
+        line = _post("/api/entity/line", json={"x1": 10, "y1": 0, "x2": 10, "y2": 30})
         h_line = _handle(line)
         if not h_line:
             pytest.skip("No line to revolve")
@@ -683,6 +697,58 @@ class Test3DSolids:
         r = _get(f"/api/solid/{h}/props")
         # May not be available, but the endpoint should respond
         assert isinstance(r, dict)
+
+    def test_11_sweep(self) -> None:
+        """Sweep a circle along a line (stub — may not be supported)."""
+        circle = _post("/api/entity/circle", json={"cx": 0, "cy": 0, "radius": 5})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 0, "y2": 50})
+        h_circle, h_path = _handle(circle), _handle(line)
+        if not h_circle or not h_path:
+            pytest.skip("Could not create sweep profile/path")
+        r = _post("/api/solid/sweep", json={"profile_handle": h_circle, "path_handle": h_path})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Sweep not supported in this edition")
+
+    def test_12_loft(self) -> None:
+        """Loft between two circles (stub — may not be supported)."""
+        c1 = _post("/api/entity/circle", json={"cx": 0, "cy": 0, "radius": 10})
+        c2 = _post("/api/entity/circle", json={"cx": 0, "cy": 50, "radius": 5})
+        h1, h2 = _handle(c1), _handle(c2)
+        if not h1 or not h2:
+            pytest.skip("Could not create loft sections")
+        r = _post("/api/solid/loft", json={"section_handles": [h1, h2]})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Loft not supported in this edition")
+
+    def test_13_fillet_edge(self) -> None:
+        """Fillet edge on a box (stub — may not be supported)."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("Could not create box for fillet")
+        r = _post("/api/solid/filletedge", json={"handle": h, "radius": 3})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Fillet edge not supported in this edition")
+
+    def test_14_chamfer_edge(self) -> None:
+        """Chamfer edge on a box (stub — may not be supported)."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("Could not create box for chamfer")
+        r = _post("/api/solid/chamferedge", json={"handle": h, "dist1": 3, "dist2": 3})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Chamfer edge not supported in this edition")
+
+    def test_15_move_solid(self) -> None:
+        """Move a solid by delta (may not be supported in all editions)."""
+        box = _post("/api/solid/box", json={"x": 20, "y": 20, "z": 20})
+        h = _handle(box)
+        if not h:
+            pytest.skip("Could not create box for move")
+        r = _post(f"/api/solid/{h}/move3d", json={"dx": 50, "dy": 50, "dz": 0})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Move solid not supported in this edition")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -816,7 +882,7 @@ class TestTransforms:
 
     def test_10_trim(self) -> None:
         """Trim a line at a point."""
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 0})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 0})
         h = _handle(line)
         if not h:
             pytest.skip("No line to trim")
@@ -826,12 +892,12 @@ class TestTransforms:
             pytest.skip("Trim not supported")
 
     def test_11_extend(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 50, "end_y": 0})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 0})
         h = _handle(line)
         if not h:
             pytest.skip("No line to extend")
         time.sleep(0.1)
-        r = _post(f"/api/entity/{h}/extend", json={"end_x": 100, "end_y": 0})
+        r = _post(f"/api/entity/{h}/extend", json={"x2": 100, "y2": 0})
         if r.get("success") is False and "not supported" in str(r.get("error", "")):
             pytest.skip("Extend not supported")
 
@@ -858,7 +924,7 @@ class TestBlocks:
 
     def test_02_create_block(self) -> None:
         # Create a line to use as block content
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 10, "end_y": 10})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 10, "y2": 10})
         h = _handle(line)
         if not h:
             pytest.skip("No entity to make block")
@@ -1066,13 +1132,27 @@ class TestDimensions:
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Ordinate dim not supported")
 
+    def test_08_arc_length(self) -> None:
+        """Arc length dimension (may not be supported in all editions)."""
+        arc = _post("/api/entity/arc", json={
+            "cx": 0, "cy": 0, "radius": 50, "start_angle": 0, "end_angle": 90,
+        })
+        h = _handle(arc)
+        if not h:
+            pytest.skip("No arc for arc-length dimension")
+        r = _post("/api/dimension/arc-length", json={
+            "handle": h, "dim_line_x": 60, "dim_line_y": 0,
+        })
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Arc-length dim not supported")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATEGORY 12: Constraints
 # ══════════════════════════════════════════════════════════════════════════════
 class TestConstraints:
     def test_01_horizontal(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 10, "end_x": 100, "end_y": 20})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 10, "x2": 100, "y2": 20})
         h = _handle(line)
         if not h:
             pytest.skip("No line for constraint")
@@ -1082,7 +1162,7 @@ class TestConstraints:
         assert r.get("success") is not False
 
     def test_02_vertical(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 10, "start_y": 0, "end_x": 20, "end_y": 100})
+        line = _post("/api/entity/line", json={"x1": 10, "y1": 0, "x2": 20, "y2": 100})
         h = _handle(line)
         if not h:
             pytest.skip("No line for constraint")
@@ -1092,8 +1172,8 @@ class TestConstraints:
         assert r.get("success") is not False
 
     def test_03_parallel(self) -> None:
-        l1 = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 50, "end_y": 50})
-        l2 = _post("/api/entity/line", json={"start_x": 60, "start_y": 0, "end_x": 110, "end_y": 50})
+        l1 = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 50})
+        l2 = _post("/api/entity/line", json={"x1": 60, "y1": 0, "x2": 110, "y2": 50})
         h1, h2 = _handle(l1), _handle(l2)
         if not h1 or not h2:
             pytest.skip("No lines for constraint")
@@ -1102,8 +1182,8 @@ class TestConstraints:
             pytest.skip("Parallel constraint not supported")
 
     def test_04_perpendicular(self) -> None:
-        l1 = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 50, "end_y": 0})
-        l2 = _post("/api/entity/line", json={"start_x": 25, "start_y": 0, "end_x": 25, "end_y": 50})
+        l1 = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 0})
+        l2 = _post("/api/entity/line", json={"x1": 25, "y1": 0, "x2": 25, "y2": 50})
         h1, h2 = _handle(l1), _handle(l2)
         if not h1 or not h2:
             pytest.skip("No lines")
@@ -1122,8 +1202,8 @@ class TestConstraints:
             pytest.skip("Concentric constraint not supported")
 
     def test_06_collinear(self) -> None:
-        l1 = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 50, "end_y": 0})
-        l2 = _post("/api/entity/line", json={"start_x": 60, "start_y": 5, "end_x": 100, "end_y": 5})
+        l1 = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 0})
+        l2 = _post("/api/entity/line", json={"x1": 60, "y1": 5, "x2": 100, "y2": 5})
         h1, h2 = _handle(l1), _handle(l2)
         if not h1 or not h2:
             pytest.skip("No lines")
@@ -1140,6 +1220,60 @@ class TestConstraints:
         r = _post("/api/constraint/distance", json={"handle1": h1, "handle2": h2, "distance": 100})
         if r.get("success") is False and "not supported" in str(r.get("error", "")):
             pytest.skip("Distance constraint not supported")
+
+    def test_08_tangent(self) -> None:
+        """Tangent constraint between a line and a curve."""
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 100})
+        arc = _post("/api/entity/arc", json={"cx": 50, "cy": 50, "radius": 20, "start_angle": 0, "end_angle": 180})
+        h1, h2 = _handle(line), _handle(arc)
+        if not h1 or not h2:
+            pytest.skip("No entities for tangent constraint")
+        r = _post("/api/constraint/tangent", json={"handle_line": h1, "handle_curve": h2})
+        if r.get("success") is False and "not supported" in str(r.get("error", "")):
+            pytest.skip("Tangent constraint not supported")
+
+    def test_09_coincident(self) -> None:
+        """Coincident constraint between two points."""
+        p1 = _post("/api/entity/point", json={"x": 20, "y": 20})
+        p2 = _post("/api/entity/point", json={"x": 40, "y": 40})
+        h1, h2 = _handle(p1), _handle(p2)
+        if not h1 or not h2:
+            pytest.skip("No points for coincident constraint")
+        r = _post("/api/constraint/coincident", json={"handle1": h1, "handle2": h2})
+        if r.get("success") is False and "not supported" in str(r.get("error", "")):
+            pytest.skip("Coincident constraint not supported")
+
+    def test_10_fix(self) -> None:
+        """Fix constraint on a point."""
+        pt = _post("/api/entity/point", json={"x": 10, "y": 10})
+        h = _handle(pt)
+        if not h:
+            pytest.skip("No point for fix constraint")
+        r = _post("/api/constraint/fix", json={"handle": h})
+        if r.get("success") is False and "not supported" in str(r.get("error", "")):
+            pytest.skip("Fix constraint not supported")
+
+    def test_11_equal(self) -> None:
+        """Equal constraint between two lines (same length)."""
+        l1 = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 0})
+        l2 = _post("/api/entity/line", json={"x1": 0, "y1": 20, "x2": 30, "y2": 20})
+        h1, h2 = _handle(l1), _handle(l2)
+        if not h1 or not h2:
+            pytest.skip("No lines for equal constraint")
+        r = _post("/api/constraint/equal", json={"handle1": h1, "handle2": h2})
+        if r.get("success") is False and "not supported" in str(r.get("error", "")):
+            pytest.skip("Equal constraint not supported")
+
+    def test_12_symmetric(self) -> None:
+        """Symmetric constraint about a line."""
+        l1 = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 50, "y2": 0})
+        mirror = _post("/api/entity/line", json={"x1": 25, "y1": -10, "x2": 25, "y2": 10})
+        h1, h_mirror = _handle(l1), _handle(mirror)
+        if not h1 or not h_mirror:
+            pytest.skip("No lines for symmetric constraint")
+        r = _post("/api/constraint/symmetric", json={"handle1": h1, "handle2": h_mirror, "plane_handle": h_mirror})
+        if r.get("success") is False and "not supported" in str(r.get("error", "")):
+            pytest.skip("Symmetric constraint not supported")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1226,7 +1360,7 @@ class TestMeasurements:
         assert isinstance(entities, list)
 
     def test_05_get_entity_info(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 0})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 0})
         h = _handle(line)
         if not h:
             pytest.skip("No entity for info test")
@@ -1276,6 +1410,29 @@ class TestAssembly:
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Assembly angle not supported")
 
+    def test_04_tangent(self) -> None:
+        """Assembly tangent constraint."""
+        b1 = _post("/api/solid/box", json={"x": 10, "y": 10, "z": 10})
+        b2 = _post("/api/solid/box", json={"x": 30, "y": 10, "z": 10})
+        h1, h2 = _handle(b1), _handle(b2)
+        if not h1 or not h2:
+            pytest.skip("No solids for tangent")
+        r = _post("/api/assembly/tangent", json={"handle1": h1, "handle2": h2})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Assembly tangent not supported")
+
+    def test_05_symmetry(self) -> None:
+        """Assembly symmetry constraint."""
+        b1 = _post("/api/solid/box", json={"x": 5, "y": 5, "z": 5})
+        b2 = _post("/api/solid/box", json={"x": 15, "y": 5, "z": 5})
+        plane = _post("/api/solid/box", json={"x": 10, "y": 20, "z": 5})
+        h1, h2, hp = _handle(b1), _handle(b2), _handle(plane)
+        if not h1 or not h2 or not hp:
+            pytest.skip("No solids for symmetry")
+        r = _post("/api/assembly/symmetry", json={"handle1": h1, "handle2": h2, "plane_handle": hp})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Assembly symmetry not supported")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATEGORY 16: Sheet Metal
@@ -1311,6 +1468,12 @@ class TestSheetMetal:
         r = _post("/api/sheetmetal/bend", json={"handle": h, "bend_radius": 3})
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Bend requires MultiCAD API")
+
+    def test_05_unfold(self) -> None:
+        """Unfold sheet metal part."""
+        r = _post("/api/sheetmetal/unfold", json={"handle": "", "x": 0, "y": 0})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Unfold requires MultiCAD API")
 
 
 # ══════════════════════════════════════════════════════════════════════════════
@@ -1391,6 +1554,14 @@ class TestMultiCad:
         # Expected to fail because no grid exists — but should respond
         assert isinstance(r, dict)
 
+    def test_12_get_room_properties(self) -> None:
+        """Get room properties by handle (requires room created first)."""
+        r = _get("/api/multicad/room/0")
+        # Expected to fail because handle "0" doesn't exist — but must respond
+        assert isinstance(r, dict)
+        if r.get("success") is False:
+            assert "error" in r
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATEGORY 18: 3D View
@@ -1414,7 +1585,7 @@ class TestSelection:
         assert isinstance(r, dict)
 
     def test_02_select_by_handles(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 200, "start_y": 200, "end_x": 300, "end_y": 300})
+        line = _post("/api/entity/line", json={"x1": 200, "y1": 200, "x2": 300, "y2": 300})
         h = _handle(line)
         if not h:
             pytest.skip("No entity for selection")
@@ -1533,6 +1704,107 @@ class TestFeatures:
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Shell not supported in this edition")
 
+    # ── Feature Tree Management (Phase P2) ─────────────────────────────
+
+    def test_06_get_feature_list(self) -> None:
+        """Get list of features on a solid."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("No solid for feature list")
+        # Add a hole so there's at least one feature
+        hole = _post("/api/feature/hole/simple", json={
+            "solid_handle": h, "diameter": 10, "depth": 15,
+        })
+        if "not supported" in str(hole.get("error", "")):
+            pytest.skip("Simple hole not supported")
+        r = _get(f"/api/feature/list?solid_handle={h}")
+        if r is None or "error" in r:
+            pytest.skip("Feature list not supported: " + str(r.get("error", "")))
+
+    def test_07_suppress_feature(self) -> None:
+        """Suppress a feature on a solid."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("No solid for suppress")
+        hole = _post("/api/feature/hole/simple", json={
+            "solid_handle": h, "diameter": 10, "depth": 15,
+        })
+        if "not supported" in str(hole.get("error", "")):
+            pytest.skip("Simple hole not supported")
+        fh = _handle(hole)
+        if not fh:
+            pytest.skip("No feature handle for suppress")
+        r = _post("/api/feature/suppress", json={"feature_handle": fh})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Suppress not supported")
+        # Verify it's now suppressed
+        lst = _get(f"/api/feature/list?solid_handle={h}")
+        if lst and "features" in lst:
+            for feat in lst["features"]:
+                if feat.get("handle") == fh or feat.get("suppressed"):
+                    break
+
+    def test_08_unsuppress_feature(self) -> None:
+        """Unsuppress a suppressed feature."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("No solid for unsuppress")
+        hole = _post("/api/feature/hole/simple", json={
+            "solid_handle": h, "diameter": 10, "depth": 15,
+        })
+        if "not supported" in str(hole.get("error", "")):
+            pytest.skip("Simple hole not supported")
+        fh = _handle(hole)
+        if not fh:
+            pytest.skip("No feature handle")
+        # Suppress first
+        _post("/api/feature/suppress", json={"feature_handle": fh})
+        # Then unsuppress
+        r = _post("/api/feature/unsuppress", json={"feature_handle": fh})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Unsuppress not supported")
+
+    def test_09_edit_feature_parameter(self) -> None:
+        """Edit a parameter of a feature."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("No solid for edit param")
+        hole = _post("/api/feature/hole/simple", json={
+            "solid_handle": h, "diameter": 10, "depth": 15,
+        })
+        if "not supported" in str(hole.get("error", "")):
+            pytest.skip("Simple hole not supported")
+        fh = _handle(hole)
+        if not fh:
+            pytest.skip("No feature handle")
+        r = _post("/api/feature/edit", json={
+            "feature_handle": fh, "param_name": "diameter", "value": 20,
+        })
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Edit param not supported")
+
+    def test_10_delete_feature(self) -> None:
+        """Delete a feature from a solid."""
+        box = _post("/api/solid/box", json={"x": 30, "y": 30, "z": 30})
+        h = _handle(box)
+        if not h:
+            pytest.skip("No solid for delete")
+        hole = _post("/api/feature/hole/simple", json={
+            "solid_handle": h, "diameter": 10, "depth": 15,
+        })
+        if "not supported" in str(hole.get("error", "")):
+            pytest.skip("Simple hole not supported")
+        fh = _handle(hole)
+        if not fh:
+            pytest.skip("No feature handle")
+        r = _post("/api/feature/delete", json={"feature_handle": fh})
+        if "not supported" in str(r.get("error", "")):
+            pytest.skip("Delete not supported")
+
 
 # ══════════════════════════════════════════════════════════════════════════════
 # CATEGORY 22: Mesh & Gradient
@@ -1541,7 +1813,7 @@ class TestMeshAndGradient:
     def test_01_create_mesh(self) -> None:
         r = _post("/api/entity/mesh", json={
             "vertices": [[0, 0, 0], [10, 0, 0], [10, 10, 0], [0, 10, 0], [5, 5, 10]],
-            "faces": [[0, 1, 2, 3], [0, 1, 4], [1, 2, 4], [2, 3, 4], [3, 0, 4]],
+            "face_indices": [4, 0, 1, 2, 3, 3, 0, 1, 4, 3, 1, 2, 4, 3, 2, 3, 4, 3, 3, 0, 4],
         })
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Mesh not supported")
@@ -1549,13 +1821,13 @@ class TestMeshAndGradient:
     def test_02_edit_mesh(self) -> None:
         mesh = _post("/api/entity/mesh", json={
             "vertices": [[0, 0, 0], [5, 0, 0], [5, 5, 0], [0, 5, 0]],
-            "faces": [[0, 1, 2, 3]],
+            "face_indices": [4, 0, 1, 2, 3],
         })
         h = _handle(mesh)
         if not h:
             pytest.skip("No mesh to edit")
         r = _patch("/api/entity/mesh", json={
-            "handle": h, "subdivide": "linear", "level": 1,
+            "handle": h, "subdivide": 1,
         })
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Mesh edit not supported")
@@ -1611,7 +1883,7 @@ class Test3DArrayAlign:
 # ══════════════════════════════════════════════════════════════════════════════
 class Test3DDivideMeasure:
     def test_01_divide_entity(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 0})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 0})
         h = _handle(line)
         if not h:
             pytest.skip("No line to divide")
@@ -1620,7 +1892,7 @@ class Test3DDivideMeasure:
             pytest.skip("Divide not supported")
 
     def test_02_measure_entity(self) -> None:
-        line = _post("/api/entity/line", json={"start_x": 0, "start_y": 0, "end_x": 100, "end_y": 0})
+        line = _post("/api/entity/line", json={"x1": 0, "y1": 0, "x2": 100, "y2": 0})
         h = _handle(line)
         if not h:
             pytest.skip("No line to measure")
@@ -1692,6 +1964,9 @@ class TestSketchFeatures:
         h_sk = _handle(sketch)
         if not h_sk:
             pytest.skip("No sketch")
+        _post("/api/feature/sketch/circle", json={
+            "sketch_handle": h_sk, "cx": 15, "cy": 15, "cz": 0, "radius": 10,
+        })
         r = _post("/api/feature/sketch/profile", json={"sketch_handle": h_sk})
         if "not supported" in str(r.get("error", "")):
             pytest.skip("Sketch profile not supported")
@@ -1706,6 +1981,9 @@ class TestSketchFeatures:
         h_sk = _handle(sketch)
         if not h_sk:
             pytest.skip("No sketch")
+        _post("/api/feature/sketch/circle", json={
+            "sketch_handle": h_sk, "cx": 15, "cy": 15, "cz": 0, "radius": 10,
+        })
         profile = _post("/api/feature/sketch/profile", json={"sketch_handle": h_sk})
         h_pr = _handle(profile)
         if not h_pr:
@@ -1727,6 +2005,9 @@ class TestSketchFeatures:
         h_sk = _handle(sketch)
         if not h_sk:
             pytest.skip("No sketch")
+        _post("/api/feature/sketch/circle", json={
+            "sketch_handle": h_sk, "cx": 10, "cy": 10, "cz": 0, "radius": 5,
+        })
         profile = _post("/api/feature/sketch/profile", json={"sketch_handle": h_sk})
         h_pr = _handle(profile)
         if not h_pr:

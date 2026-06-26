@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import math
 from typing import Any
 
 import pywintypes
@@ -22,23 +23,6 @@ CAD_PROG_ID = "nanoCAD.Application"
 def _to_safe_array(nc_util: Any, points: list[float]) -> Any:
     """Convert a flat list of floats to a COM safe array."""
     return nc_util.CreateSafeArrayFromVector(points)
-
-
-def _from_safe_array(sa: Any) -> list[float]:
-    """Convert a COM safe array to a flat list of floats."""
-    win32com.client.CastTo(sa, "IUnknown")
-    # pywin32 doesn't have a direct safe array reader; use VBArray
-    # For 2D points, the safe array is typically a variant array
-    try:
-        # Try the VBArray approach
-        lower = sa.LBound(1)
-        upper = sa.UBound(1)
-        result = []
-        for i in range(lower, upper + 1):
-            result.append(sa.GetValue(i))
-        return result
-    except Exception:
-        return []
 
 
 class NanoCadComBridge:
@@ -138,18 +122,26 @@ class NanoCadComBridge:
 
     # ── COM Entity Creation Wrappers ───────────────────────────
 
-    def com_add_line(self, x1: float, y1: float, x2: float, y2: float) -> str:
-        """Add a line via COM. Returns handle string."""
-        pt1 = _to_safe_array(self._util, [x1, y1, 0.0])
-        pt2 = _to_safe_array(self._util, [x2, y2, 0.0])
-        ent = self._ms.AddLine(pt1, pt2)
-        return str(ent.Handle)
+    def com_add_line(self, x1: float, y1: float, x2: float, y2: float) -> str | None:
+        """Add a line via COM. Returns handle string or None on error."""
+        try:
+            pt1 = _to_safe_array(self._util, [x1, y1, 0.0])
+            pt2 = _to_safe_array(self._util, [x2, y2, 0.0])
+            ent = self._ms.AddLine(pt1, pt2)
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_line failed: %s", e)
+            return None
 
-    def com_add_circle(self, cx: float, cy: float, radius: float) -> str:
-        """Add a circle via COM. Returns handle string."""
-        center = _to_safe_array(self._util, [cx, cy, 0.0])
-        ent = self._ms.AddCircle(center, radius)
-        return str(ent.Handle)
+    def com_add_circle(self, cx: float, cy: float, radius: float) -> str | None:
+        """Add a circle via COM. Returns handle string or None on error."""
+        try:
+            center = _to_safe_array(self._util, [cx, cy, 0.0])
+            ent = self._ms.AddCircle(center, radius)
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_circle failed: %s", e)
+            return None
 
     def com_add_arc(
         self,
@@ -158,27 +150,32 @@ class NanoCadComBridge:
         radius: float,
         start_angle: float,
         end_angle: float,
-    ) -> str:
-        """Add an arc via COM. Returns handle string."""
-        center = _to_safe_array(self._util, [cx, cy, 0.0])
-        # COM API uses radians
-        import math
+    ) -> str | None:
+        """Add an arc via COM. Returns handle string or None on error."""
+        try:
+            center = _to_safe_array(self._util, [cx, cy, 0.0])
+            sa = math.radians(start_angle)
+            ea = math.radians(end_angle)
+            ent = self._ms.AddArc(center, radius, sa, ea)
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_arc failed: %s", e)
+            return None
 
-        sa = math.radians(start_angle)
-        ea = math.radians(end_angle)
-        ent = self._ms.AddArc(center, radius, sa, ea)
-        return str(ent.Handle)
-
-    def com_add_polyline(self, vertices: list[tuple[float, float]], closed: bool = False) -> str:
-        """Add a lightweight polyline via COM. Returns handle string."""
-        flat = []
-        for vx, vy in vertices:
-            flat.extend([vx, vy, 0.0])
-        pts = _to_safe_array(self._util, flat)
-        ent = self._ms.AddLightWeightPolyline(pts)
-        if closed:
-            ent.Closed = True
-        return str(ent.Handle)
+    def com_add_polyline(self, vertices: list[tuple[float, float]], closed: bool = False) -> str | None:
+        """Add a lightweight polyline via COM. Returns handle string or None on error."""
+        try:
+            flat = []
+            for vx, vy in vertices:
+                flat.extend([vx, vy, 0.0])
+            pts = _to_safe_array(self._util, flat)
+            ent = self._ms.AddLightWeightPolyline(pts)
+            if closed:
+                ent.Closed = True
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_polyline failed: %s", e)
+            return None
 
     def com_add_text(
         self,
@@ -186,17 +183,25 @@ class NanoCadComBridge:
         y: float,
         content: str,
         height: float,
-    ) -> str:
-        """Add a single-line text via COM. Returns handle string."""
-        ins = _to_safe_array(self._util, [x, y, 0.0])
-        ent = self._ms.AddText(content, ins, height)
-        return str(ent.Handle)
+    ) -> str | None:
+        """Add a single-line text via COM. Returns handle string or None on error."""
+        try:
+            ins = _to_safe_array(self._util, [x, y, 0.0])
+            ent = self._ms.AddText(content, ins, height)
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_text failed: %s", e)
+            return None
 
-    def com_add_point(self, x: float, y: float) -> str:
-        """Add a point via COM. Returns handle string."""
-        pt = _to_safe_array(self._util, [x, y, 0.0])
-        ent = self._ms.AddPoint(pt)
-        return str(ent.Handle)
+    def com_add_point(self, x: float, y: float) -> str | None:
+        """Add a point via COM. Returns handle string or None on error."""
+        try:
+            pt = _to_safe_array(self._util, [x, y, 0.0])
+            ent = self._ms.AddPoint(pt)
+            return str(ent.Handle)
+        except Exception as e:
+            logger.warning("com_add_point failed: %s", e)
+            return None
 
     def com_delete_entity(self, handle: str) -> bool:
         """Delete an entity by handle via COM."""
@@ -306,7 +311,7 @@ class NanoCadComBridge:
         try:
             info["name"] = str(self._doc.Name)
             info["path"] = str(self._doc.FullName) if self._doc.FullName else ""
-            info["is_saved"] = not self._doc.Saved
+            info["is_saved"] = self._doc.Saved
             info["entities_count"] = self._ms.Count
         except Exception as e:
             logger.warning("com_get_document_info failed: %s", e)

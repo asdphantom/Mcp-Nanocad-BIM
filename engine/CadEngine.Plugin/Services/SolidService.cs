@@ -105,72 +105,121 @@ namespace CadEngine
         public SuccessResponse RotateSolid(string h, double a, double cx, double cy, double cz, double ax, double ay, double az)
         {
             var id = GetId(h);
-            if (id == null) return new SuccessResponse { Success = false };
-            using var tr = Db.TransactionManager.StartTransaction();
-            ((Entity)tr.GetObject(id.Value, OpenMode.ForWrite)).TransformBy(Matrix3d.Rotation(a * Math.PI / 180.0, new Vector3d(ax, ay, az), new Point3d(cx, cy, cz)));
-            tr.Commit(); return new SuccessResponse { Success = true };
+            if (id == null) return new SuccessResponse { Success = false, Error = "Invalid handle" };
+            try
+            {
+                var result = MainThreadExecutor.Execute(() =>
+                {
+                    using var tr = Db.TransactionManager.StartTransaction();
+                    ((Entity)tr.GetObject(id.Value, OpenMode.ForWrite)).TransformBy(
+                        Matrix3d.Rotation(a * Math.PI / 180.0, new Vector3d(ax, ay, az), new Point3d(cx, cy, cz)));
+                    tr.Commit();
+                    return (object?)new SuccessResponse { Success = true };
+                });
+                return (SuccessResponse)(result ?? new SuccessResponse { Success = false });
+            }
+            catch (Exception ex)
+            {
+                return new SuccessResponse { Success = false, Error = ex.Message };
+            }
         }
         public SuccessResponse Set3dView(string dir, string rm)
         {
-            // Use ViewTableRecord to change the view without SendCommand (which can crash).
-            // This runs on the background thread but ViewTableRecord is safe from any thread.
+            // Use ViewTableRecord + ed.SetCurrentView() — same safe pattern as ZoomExtents.
+            // Get the ACTIVE document on the main thread (not cached CadContext),
+            // because CadContext.ActiveDocument may be stale after new_document().
             try
             {
-                var db = HostApplicationServices.WorkingDatabase;
-                if (db == null)
-                    return new SuccessResponse { Success = false, Error = "No database" };
-                var vtr = new ViewTableRecord();
-                switch (dir.ToLowerInvariant())
+                var viewDir = dir.ToLowerInvariant() switch
                 {
-                    case "top": vtr.ViewDirection = new Vector3d(0, 0, 1); break;
-                    case "bottom": vtr.ViewDirection = new Vector3d(0, 0, -1); break;
-                    case "left": vtr.ViewDirection = new Vector3d(-1, 0, 0); break;
-                    case "right": vtr.ViewDirection = new Vector3d(1, 0, 0); break;
-                    case "front": vtr.ViewDirection = new Vector3d(0, 1, 0); break;
-                    case "back": vtr.ViewDirection = new Vector3d(0, -1, 0); break;
-                    case "sw": vtr.ViewDirection = new Vector3d(-1, -1, 1); break;
-                    case "se": vtr.ViewDirection = new Vector3d(1, -1, 1); break;
-                    case "nw": vtr.ViewDirection = new Vector3d(-1, 1, 1); break;
-                    case "ne": vtr.ViewDirection = new Vector3d(1, 1, 1); break;
-                    default: vtr.ViewDirection = new Vector3d(0, 0, 1); break;
-                }
-                vtr.Target = new Point3d(0, 0, 0);
-                vtr.Height = 100;
-                vtr.Width = 100;
-                
-                var doc = CadContext.ActiveDocument;
-                if (doc != null)
-                {
-                    using var tr = db.TransactionManager.StartTransaction();
-                    var vtm = (ViewTable)tr.GetObject(db.ViewTableId, OpenMode.ForRead);
-                    foreach (ObjectId id in vtm)
-                    {
-                        var vt = (ViewTableRecord)tr.GetObject(id, OpenMode.ForWrite);
-                        if (vt.Name == "*Active" || string.IsNullOrEmpty(vt.Name))
-                        {
-                            // Apply to the active (model space) view
-                        }
-                    }
-                    tr.Commit();
-                }
-                
-                // Also set via editor (main thread required for SetCurrentView)
+                    "top" => new Vector3d(0, 0, 1),
+                    "bottom" => new Vector3d(0, 0, -1),
+                    "left" => new Vector3d(-1, 0, 0),
+                    "right" => new Vector3d(1, 0, 0),
+                    "front" => new Vector3d(0, -1, 0),
+                    "back" => new Vector3d(0, 1, 0),
+                    "sw" => new Vector3d(-1, -1, 1),
+                    "se" => new Vector3d(1, -1, 1),
+                    "nw" => new Vector3d(-1, 1, 1),
+                    "ne" => new Vector3d(1, 1, 1),
+                    _ => new Vector3d(1, -1, 1),  // default: SE isometric
+                };
+
                 var result = MainThreadExecutor.Execute(() =>
                 {
                     try
                     {
-                        var ed = doc?.Editor;
-                        if (ed != null)
+                        // Get the REAL active document on the main thread — not the stale CadContext cache
+                        var doc = App.DocumentManager.MdiActiveDocument;
+                        if (doc == null)
+                            doc = CadContext.ActiveDocument;
+                        if (doc == null)
+                            return (object?)new SuccessResponse { Success = false, Error = "No active document" };
+                        var ed = doc.Editor;
+                        var db = HostApplicationServices.WorkingDatabase;
+                        if (db == null || ed == null)
+                            return (object?)new SuccessResponse { Success = false, Error = "No database or editor" };
+
+                        // Compute extents for zoom (same as ZoomExtents)
+                        using var tr = db.TransactionManager.StartTransaction();
+                        double minX = double.MaxValue, minY = double.MaxValue;
+                        double maxX = double.MinValue, maxY = double.MinValue;
+                        double minZ = double.MaxValue, maxZ = double.MinValue;
+                        bool hasEntities = false;
+                        var bt = (BlockTable)tr.GetObject(db.BlockTableId, OpenMode.ForRead);
+                        var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
+                        foreach (ObjectId id in ms)
                         {
-                            ed.SetCurrentView(vtr);
-                            return new SuccessResponse { Success = true };
+                            try
+                            {
+                                var ent = (Entity)tr.GetObject(id, OpenMode.ForRead);
+                                var ext = ent.GeometricExtents;
+                                if (ext.MinPoint.X < minX) minX = ext.MinPoint.X;
+                                if (ext.MinPoint.Y < minY) minY = ext.MinPoint.Y;
+                                if (ext.MinPoint.Z < minZ) minZ = ext.MinPoint.Z;
+                                if (ext.MaxPoint.X > maxX) maxX = ext.MaxPoint.X;
+                                if (ext.MaxPoint.Y > maxY) maxY = ext.MaxPoint.Y;
+                                if (ext.MaxPoint.Z > maxZ) maxZ = ext.MaxPoint.Z;
+                                hasEntities = hasEntities || true;
+                            }
+                            catch { }
                         }
-                        return new SuccessResponse { Success = false, Error = "No editor" };
+                        tr.Commit();
+
+                        var vtr = new ViewTableRecord();
+                        vtr.ViewDirection = viewDir;
+                        if (hasEntities)
+                        {
+                            // Center on model center
+                            double cx = (minX + maxX) / 2;
+                            double cy = (minY + maxY) / 2;
+                            double cz = (minZ + maxZ) / 2;
+                            vtr.Target = new Point3d(cx, cy, cz);
+
+                            // Size view to fit all entities
+                            double spanX = maxX - minX;
+                            double spanY = maxY - minY;
+                            double spanZ = maxZ - minZ;
+                            double maxSpan = Math.Max(spanX, Math.Max(spanY, spanZ));
+                            double margin = maxSpan * 0.1;
+                            if (margin < 1) margin = 1;
+                            vtr.Height = maxSpan + 2 * margin;
+                            vtr.Width = maxSpan + 2 * margin;
+                        }
+                        else
+                        {
+                            vtr.Target = new Point3d(0, 0, 0);
+                            vtr.Height = 100;
+                            vtr.Width = 100;
+                        }
+
+                        ed.SetCurrentView(vtr);
+                        return (object?)new SuccessResponse { Success = true };
                     }
                     catch (Exception ex)
                     {
-                        PluginEntry.DebugLog($"Set3dView (editor) failed: {ex.Message}");
-                        return new SuccessResponse { Success = false, Error = ex.Message };
+                        PluginEntry.DebugLog($"Set3dView failed: {ex.Message}");
+                        return (object?)new SuccessResponse { Success = false, Error = ex.Message };
                     }
                 });
                 return result as SuccessResponse ?? new SuccessResponse { Success = false, Error = "Main thread executor returned null" };
@@ -280,8 +329,9 @@ namespace CadEngine
         }
 
         /// <summary>
-        /// Apply fillet or chamfer: erase old solid, create new Mc3dSolid at same position,
-        /// apply feature, add to document, return new Handle from McObjectId.Handle.
+        /// Apply fillet or chamfer to an existing solid via MultiCAD Mc3dSolid wrapper.
+        /// Uses McObjectId.FromHandle + GetObject to wrap the existing entity —
+        /// does NOT erase or recreate the solid, preserving all boolean geometry.
         /// </summary>
         private SuccessResponse ApplyFeature(
             string solidHandle,
@@ -295,51 +345,29 @@ namespace CadEngine
             {
                 try
                 {
-                    // Read dimensions and position of old solid
-                    double w, d, h;
-                    Point3d origin;
-                    using (var tr = Db.TransactionManager.StartTransaction())
+                    PluginEntry.DebugLog($"ApplyFeature: wrapping solid {solidHandle} (oid={id.Value})");
+                    var mcId = McObjectId.FromHandle(id.Value.Handle.Value);
+                    var mcSolid = mcId.GetObject() as Mc3dSolid;
+                    if (mcSolid == null)
                     {
-                        var s = tr.GetObject(id.Value, OpenMode.ForRead) as Solid3d;
-                        if (s == null)
-                            return new SuccessResponse { Success = false, Error = "Not a Solid3d" };
-                        var ext = s.GeometricExtents;
-                        w = ext.MaxPoint.X - ext.MinPoint.X;
-                        d = ext.MaxPoint.Y - ext.MinPoint.Y;
-                        h = ext.MaxPoint.Z - ext.MinPoint.Z;
-                        origin = ext.MinPoint;
-                        tr.Commit();
+                        PluginEntry.DebugLog($"ApplyFeature: Cannot wrap as Mc3dSolid, trying direct cast...");
+                        return new SuccessResponse { Success = false, Error = "Cannot wrap solid as Mc3dSolid" };
                     }
-                    if (w <= 0 || d <= 0 || h <= 0)
-                        return new SuccessResponse { Success = false, Error = "Cannot determine box dimensions" };
+                    PluginEntry.DebugLog($"ApplyFeature: Mc3dSolid OK, ID={mcSolid.ID}");
 
-                    // Erase old solid, create new Mc3dSolid at same position with feature applied
-                    using (var tr = Db.TransactionManager.StartTransaction())
-                    {
-                        var old = tr.GetObject(id.Value, OpenMode.ForWrite) as Entity;
-                        old?.Erase(true);
-                        tr.Commit();
-                    }
-
-                    var mcSolid = new Mc3dSolid();
-                    mcSolid.GetSolidBody().MakeBox(
-                        new Multicad.Geometry.Point3d(origin.X, origin.Y, origin.Z), w, d, h);
-                    McObjectManager.Add2Document(mcSolid.DbEntity);
-                    McObjectManager.UpdateAll();
-
-                    var (_, edgeIds) = GetFaceAndEdgeIds(mcSolid.ID);
+                    var (faceIds, edgeIds) = GetFaceAndEdgeIds(mcSolid.ID);
+                    PluginEntry.DebugLog($"ApplyFeature: faces={faceIds.Count} edges={edgeIds.Count}");
                     if (edgeIds.Count == 0)
                         return new SuccessResponse { Success = false, Error = "No edges found on solid" };
 
                     applyFeature(mcSolid, edgeIds);
                     McObjectManager.UpdateAll();
 
-                    var handleStr = mcSolid.ID.Handle.ToString("X");
-                    return new SuccessResponse { Success = true, Handle = handleStr };
+                    return new SuccessResponse { Success = true, Handle = solidHandle };
                 }
                 catch (Exception ex)
                 {
-                    PluginEntry.DebugLog($"ApplyFeature failed: {ex.Message}");
+                    PluginEntry.DebugLog($"ApplyFeature failed: {ex.Message}\n{ex.StackTrace}");
                     return new SuccessResponse { Success = false, Error = ex.Message };
                 }
             }) as SuccessResponse ?? new SuccessResponse { Success = false, Error = "Main thread executor returned null" };
@@ -349,24 +377,34 @@ namespace CadEngine
         {
             return ApplyFeature(solidHandle, (mcSolid, edgeIds) =>
             {
+                PluginEntry.DebugLog($"FilletEdge: attempting {edgeIds.Count} edges, radius={radius}");
+                foreach (var eid in edgeIds)
+                    PluginEntry.DebugLog($"  edge: {eid}");
+
                 var fillet = mcSolid.AddFilletFeature(edgeIds, radius);
+                PluginEntry.DebugLog($"FilletEdge: AddFilletFeature returned {fillet?.GetType().Name ?? "null"}");
                 fillet.DbEntity.AddToCurrentDocument();
+                PluginEntry.DebugLog("FilletEdge: AddToCurrentDocument done");
                 McObjectManager.UpdateAll();
+                PluginEntry.DebugLog("FilletEdge: UpdateAll done");
             });
         }
 
         public SuccessResponse ChamferEdgeSolid(string solidHandle, double dist1, double dist2)
         {
+            // Chamfer via MultiCAD Mc3dSolid wrapper with detailed logging
             return ApplyFeature(solidHandle, (mcSolid, edgeIds) =>
             {
-                var chamfer = new ChamferFeature();
-                chamfer.ChamferType = ChamferType.TwoDistances;
-                chamfer.SetEdges(edgeIds);
-                chamfer.Distance = dist1;
-                chamfer.Distance2 = dist2;
+                PluginEntry.DebugLog($"ChamferEdge: attempting {edgeIds.Count} edges, dist1={dist1} dist2={dist2}");
+                var chamfer = mcSolid.AddChamferFeature(
+                    edgeIds,
+                    ChamferType.TwoDistances,
+                    ChamferSetbackType.None,
+                    dist1, dist2, 0);
                 chamfer.DbEntity.AddToCurrentDocument();
-                chamfer.DbEntity.Update();
+                PluginEntry.DebugLog("ChamferEdge: feature created, updating...");
                 McObjectManager.UpdateAll();
+                PluginEntry.DebugLog("ChamferEdge: update complete");
             });
         }
 

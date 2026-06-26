@@ -2,10 +2,10 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-923%20unit%20%2B%2019%20contract-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1060%20unit%20%2B%20189%20integration-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 183 инструмента для 2D/3D черчения,
-инженерных символов, размеров, листового металла, сборок и MultiCAD API.
+**MCP-сервер для автоматизации nanoCAD 26** — 208 инструментов для 2D/3D черчения,
+инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
 с любыми MCP-клиентами: opencode, Claude Desktop, Cursor и др.
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (183 инструмента)
+Python MCP Server (208 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,7 +52,7 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| **ИТОГО** | **183** | |
+| **ИТОГО** | **208** | |
 
 ## 🚀 Быстрый старт
 
@@ -104,21 +104,24 @@ py -m src.presentation.server
 {
   "mcp": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
-      "cwd": "F:\\nanoCAD\\server"
+      "command": ["python", "-u", "-m", "src.presentation.server"],
+      "cwd": "F:\\nanoCAD\\server",
+      "environment": { "PYTHONPATH": "F:\\nanoCAD\\server" }
     }
   }
 }
 ```
+
+> **Важно:** флаг `-u` (unbuffered stdout) обязателен на Windows.
+> Без него MCP-клиент не получит ответ от сервера из-за буферизации вывода.
 
 **Claude Desktop** (`%APPDATA%\Claude\claude_desktop_config.json`):
 ```json
 {
   "mcpServers": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
+      "command": "python",
+      "args": ["-u", "-m", "src.presentation.server"],
       "cwd": "F:\\nanoCAD\\server"
     }
   }
@@ -130,8 +133,8 @@ py -m src.presentation.server
 {
   "mcpServers": {
     "nanoCAD": {
-      "command": "py",
-      "args": ["-m", "src.presentation.server"],
+      "command": "python",
+      "args": ["-u", "-m", "src.presentation.server"],
       "cwd": "F:\\nanoCAD\\server"
     }
   }
@@ -151,14 +154,14 @@ py server\scripts\demo_lite.py
 ## 🔧 Команды
 
 ```powershell
-# Запуск сервера
-py -m src.presentation.server
-py -m src.presentation.server --transport sse --port 8081   # удалённый доступ
+# Запуск сервера (флаг -u обязателен на Windows)
+py -u -m src.presentation.server
+py -u -m src.presentation.server --transport sse --port 8081   # удалённый доступ
 
 # Тесты
-py -m pytest server/tests/ -v                                    # все
-py -m pytest server/tests/unit/ -v --cov=src                     # unit + coverage
-py -m pytest server/tests/integration/ -v                        # интеграционные
+py -m pytest server/tests/ -v -q                                # все
+py -m pytest server/tests/unit/ --cov=src                       # unit + coverage
+py -m pytest server/tests/integration/ -v                       # интеграционные
 
 # Линтинг
 py -m ruff check server/src/
@@ -175,12 +178,12 @@ py server/scripts/demo_bracket.py
 
 | Вид тестов | Количество | Статус |
 |-----------|:----------:|:------:|
-| Unit-тесты (mocked HTTP) | 923 | ✅ Pass |
-| Contract-тесты (MCP протокол) | 19 | ✅ Pass |
-| Интеграционные (живой nanoCAD) | 189 (+33 skipped) | ✅ Pass |
-| Типы (mypy --strict) | 17 файлов | ✅ Clean |
-| Линтер (ruff) | — | ✅ Clean |
-| Покрытие Python-кода | 86% | ✅ |
+| Unit-тесты | 1060 | ✅ Pass |
+| Интеграционные (живой nanoCAD) | 189 (+257 skipped) | ✅ Pass |
+| Типы (mypy --strict) | 0 errors | ✅ Clean |
+| Линтер (ruff) | 0 errors | ✅ Clean |
+| Покрытие Python-кода | 88% | ✅ |
+| MCP E2E (init → list → call) | 3/3 шага | ✅ |
 
 ## 🔌 Архитектура
 

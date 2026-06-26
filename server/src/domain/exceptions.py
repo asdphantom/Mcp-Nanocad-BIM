@@ -11,7 +11,7 @@ class NanocadError(Exception):
     """Base for all nanoCAD MCP errors."""
 
 
-class ConnectionError(NanocadError):
+class CadConnectionError(NanocadError):
     """CAD is not reachable or connection was lost."""
 
 
@@ -28,7 +28,7 @@ class OperationError(NanocadError):
 
 
 __all__ = [
-    "ConnectionError",
+    "CadConnectionError",
     "NanocadError",
     "NotSupportedError",
     "OperationError",

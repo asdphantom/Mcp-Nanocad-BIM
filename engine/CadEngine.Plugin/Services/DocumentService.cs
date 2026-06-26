@@ -1,8 +1,14 @@
 using System;
+using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
+using System.Drawing.Imaging;
 using HostMgd.ApplicationServices;
 using Teigha.DatabaseServices;
 using Teigha.Geometry;
+using Multicad;
+using Multicad.DatabaseServices;
+using Multicad.ApplicationServices;
 using App = HostMgd.ApplicationServices.Application;
 
 namespace CadEngine
@@ -174,13 +180,16 @@ namespace CadEngine
         {
             try
             {
-                var doc = CadContext.ActiveDocument;
-                if (doc == null)
-                    return new SuccessResponse { Success = false, Error = "No active document" };
                 var result = MainThreadExecutor.Execute(() =>
                 {
                     try
                     {
+                        // Get the REAL active document on the main thread — not the stale CadContext cache
+                        var doc = App.DocumentManager.MdiActiveDocument;
+                        if (doc == null)
+                            doc = CadContext.ActiveDocument;
+                        if (doc == null)
+                            return (object?)new SuccessResponse { Success = false, Error = "No active document" };
                         var ed = doc.Editor;
                         // Zoom to extents via ViewTableRecord
                         var db = HostApplicationServices.WorkingDatabase;
@@ -582,6 +591,53 @@ namespace CadEngine
             // to safely execute on the main thread.
             PluginEntry.DebugLog($"ExportStl not available in free edition");
             return new SuccessResponse { Success = false, Error = "STL export not available in free edition" };
+        }
+
+        public SuccessResponse SaveScreenshot(string path, int width = 1920, int height = 1080)
+        {
+            try
+            {
+                using var tr = Db.TransactionManager.StartTransaction();
+                var bt = (BlockTable)tr.GetObject(Db.BlockTableId, OpenMode.ForRead);
+                var ms = (BlockTableRecord)tr.GetObject(Db.CurrentSpaceId, OpenMode.ForRead);
+
+                var entityIds = new List<McObjectId>();
+                foreach (var id in ms)
+                {
+                    var obj = tr.GetObject(id, OpenMode.ForRead);
+                    if (obj is Entity ent && !ent.IsErased)
+                        entityIds.Add(McObjectId.FromHandle(id.Handle.Value));
+                }
+                tr.Commit();
+
+                if (entityIds.Count == 0)
+                    return new SuccessResponse { Success = false, Error = "No entities to capture" };
+
+                var psrs = new McEmfParams
+                {
+                    SquareEmf = false,
+                    UseColor = true,
+                    UseWidth = true,
+                    BgrColor = System.Drawing.Color.White
+                };
+
+                using var metafile = McNativeGate.CreateEmf(entityIds, psrs);
+                if (metafile == null)
+                    return new SuccessResponse { Success = false, Error = "Failed to create metafile" };
+
+                var dir = System.IO.Path.GetDirectoryName(path);
+                if (!string.IsNullOrEmpty(dir) && !System.IO.Directory.Exists(dir))
+                    System.IO.Directory.CreateDirectory(dir);
+
+                metafile.Save(path);
+                PluginEntry.DebugLog($"Screenshot saved to {path} ({width}x{height})");
+                return new SuccessResponse { Success = true };
+            }
+            catch (Exception ex)
+            {
+                PluginEntry.DebugLog($"SaveScreenshot error: {ex.Message}");
+                return new SuccessResponse { Success = false, Error = ex.Message };
+            }
         }
     }
 }

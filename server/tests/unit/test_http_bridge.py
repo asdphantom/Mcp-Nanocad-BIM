@@ -340,7 +340,7 @@ class TestDocumentOps:
             "POST", "/api/block/WASHER/insert",
             json={
                 "x": 10, "y": 20,
-                "scaleX": 1.5, "scaleY": 1.5, "scaleZ": 1.5,
+                "scale_x": 1.5, "scale_y": 1.5, "scale_z": 1.5,
                 "rotation": 30,
             },
             timeout=30.0,
@@ -350,9 +350,9 @@ class TestDocumentOps:
         bridge._client.request.return_value = _mock_response({"handle": "INS_002"})
         bridge.insert_block("WASHER")
         body = bridge._client.request.call_args.kwargs["json"]
-        assert body["scaleX"] == 1.0
-        assert body["scaleY"] == 1.0
-        assert body["scaleZ"] == 1.0
+        assert body["scale_x"] == 1.0
+        assert body["scale_y"] == 1.0
+        assert body["scale_z"] == 1.0
 
     def test_get_blocks(self, bridge: HttpCadBridge) -> None:
         bridge._client.request.return_value = _mock_response({

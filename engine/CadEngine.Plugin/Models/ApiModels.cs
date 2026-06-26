@@ -201,6 +201,17 @@ namespace CadEngine
         public double? CenterY { get; set; }
     }
 
+    public class Rotate3dRequest
+    {
+        public double Angle { get; set; }
+        public double CenterX { get; set; }
+        public double CenterY { get; set; }
+        public double CenterZ { get; set; }
+        public double AxisX { get; set; }
+        public double AxisY { get; set; }
+        public double AxisZ { get; set; }
+    }
+
     public class ScaleRequest
     {
         public double Factor { get; set; }
@@ -257,6 +268,13 @@ namespace CadEngine
     public class ExportRequest
     {
         public string Path { get; set; } = "";
+    }
+
+    public class ScreenshotRequest
+    {
+        public string Path { get; set; } = "";
+        public int Width { get; set; } = 1920;
+        public int Height { get; set; } = 1080;
     }
 
     public class NewDocumentRequest
@@ -1006,5 +1024,18 @@ namespace CadEngine
     public class BodyContourRequest
     {
         public string SolidHandle { get; set; } = "";
+    }
+
+    // ── Feature Tree Management (Phase P2) ──
+    public class FeatureHandleRequest
+    {
+        public string FeatureHandle { get; set; } = "";
+    }
+
+    public class EditFeatureParameterRequest
+    {
+        public string FeatureHandle { get; set; } = "";
+        public string ParamName { get; set; } = "";
+        public double Value { get; set; }
     }
 }

@@ -122,14 +122,15 @@ docs/_build/
 # ── OpenCode (local agent config) ────────────────────────────────
 .opencode/
 
-# ── Planning & audit scripts ─────────────────────────────────────
+# ── Demo & audit scripts (excluded from repo) ────────────────────
 IMPLEMENTATION_PLAN.md
-server/scripts/check_*.py
-server/scripts/count_*.py
-server/scripts/test_*.py
-server/scripts/validate_*.py
-server/scripts/demo_bearing_bracket*.py
-server/scripts/demo_pillow_block*.py
+server/scripts/*.py
+server/scripts/check_*.*
+server/scripts/count_*.*
+server/scripts/test_*.*
+server/scripts/validate_*.*
+server/scripts/demo_bearing_bracket*.*
+server/scripts/demo_pillow_block*.*
 
 # ── Outdated docs ────────────────────────────────────────────────
 docs/instructions/06_server_improvements.md

@@ -104,6 +104,9 @@ disable_error_code = [
     "untyped-decorator",  # @server.list_tools() etc.
 ]
 
+[tool.coverage.run]
+omit = ["src/domain/protocols.py"]
+
 [tool.pytest.ini_options]
 asyncio_mode = "auto"
 testpaths = ["tests"]

@@ -48,19 +48,31 @@ _OFFLINE_TOOLS: set[str] = {
 
 _COM_TOOLS: set[str] = {
     # Entity creation (COM fallback in CadRepository)
-    "create_line", "create_circle", "create_arc", "create_polyline",
-    "create_text", "create_point", "create_rectangle",
+    "create_line",
+    "create_circle",
+    "create_arc",
+    "create_polyline",
+    "create_text",
+    "create_point",
+    "create_rectangle",
     # Entity manipulation
-    "delete_entity", "get_entity",
+    "delete_entity",
+    "get_entity",
     # Layer
-    "get_layers", "create_layer", "set_current_layer",
+    "get_layers",
+    "create_layer",
+    "set_current_layer",
     # Document
-    "get_document_info", "save_document", "export_pdf", "zoom_extents",
+    "get_document_info",
+    "save_document",
+    "export_pdf",
+    "zoom_extents",
     # System
-    "get_system_variable", "set_system_variable",
+    "get_system_variable",
+    "set_system_variable",
 }
 
-# All 183 tool definitions in order
+# All 207 tool definitions in order
 TOOL_DEFS: list[dict[str, Any]] = [
     # ── Health & System ───────────────────────────────────────
     {
@@ -84,7 +96,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     # ── 2D Primitives ─────────────────────────────────────────
     {
         "name": "create_line",
-        "description": "Create a line",
+        "description": "Create a line segment from (x1,y1) to (x2,y2)",
         "properties": {
             "x1": {"type": N},
             "y1": {"type": N},
@@ -96,7 +108,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_circle",
-        "description": "Create a circle",
+        "description": "Create a circle by center (cx,cy) and radius",
         "properties": {
             "cx": {"type": N},
             "cy": {"type": N},
@@ -133,7 +145,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_rectangle",
-        "description": "Create a rectangle",
+        "description": "Create a rectangle from corner point with width and height",
         "properties": {
             "x1": {"type": N},
             "y1": {"type": N},
@@ -145,7 +157,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_text",
-        "description": "Create single-line text",
+        "description": "Create single-line text at (x,y) with height and content",
         "properties": {
             "x": {"type": N},
             "y": {"type": N},
@@ -172,7 +184,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_point",
-        "description": "Create a point",
+        "description": "Create a point entity at (x,y) coordinates",
         "properties": {"x": {"type": N}, "y": {"type": N}, "layer": S2},
         "required": ["x", "y"],
     },
@@ -360,19 +372,19 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_layer",
-        "description": "Create a new layer",
+        "description": "Create a new layer with specified name",
         "properties": {"name": {"type": S}},
         "required": ["name"],
     },
     {
         "name": "get_layers",
-        "description": "Get all layers",
+        "description": "Get list of all layers in the drawing",
         "properties": {},
         "required": [],
     },
     {
         "name": "set_current_layer",
-        "description": "Set the active layer",
+        "description": "Set the current active layer by name",
         "properties": {"name": {"type": S}},
         "required": ["name"],
     },
@@ -480,13 +492,13 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "save_document",
-        "description": "Save current document",
+        "description": "Save current document to disk (optionally to new path)",
         "properties": {"path": {"type": S}},
         "required": [],
     },
     {
         "name": "export_pdf",
-        "description": "Export to PDF",
+        "description": "Export current document to PDF file at specified path",
         "properties": {"path": {"type": S}},
         "required": ["path"],
     },
@@ -567,7 +579,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "zoom_extents",
-        "description": "Zoom to drawing extents",
+        "description": "Zoom the view to show all drawing entities",
         "properties": {},
         "required": [],
     },
@@ -598,63 +610,63 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "get_system_variable",
-        "description": "Get a system variable",
+        "description": "Get value of a CAD system variable by name",
         "properties": {"name": {"type": S}},
         "required": ["name"],
     },
     {
         "name": "set_system_variable",
-        "description": "Set a system variable",
+        "description": "Set a CAD system variable to specified value",
         "properties": {"name": {"type": S}, "value": {"type": S}},
         "required": ["name", "value"],
     },
     # ── 3D Solids ─────────────────────────────────────────────
     {
         "name": "create_box",
-        "description": "Create a 3D box",
+        "description": "Create a 3D box by corner point and dimensions (width,depth,height)",
         "properties": {"x": {"type": N}, "y": {"type": N}, "z": {"type": N}},
         "required": ["x", "y", "z"],
     },
     {
         "name": "create_sphere",
-        "description": "Create a 3D sphere",
+        "description": "Create a 3D sphere by center point and radius",
         "properties": {"radius": {"type": N}},
         "required": ["radius"],
     },
     {
         "name": "create_cylinder",
-        "description": "Create a 3D cylinder",
+        "description": "Create a 3D cylinder by center point, radius, and height",
         "properties": {"radius": {"type": N}, "height": {"type": N}},
         "required": ["radius", "height"],
     },
     {
         "name": "create_cone",
-        "description": "Create a 3D cone",
+        "description": "Create a 3D cone by center point, base radius, and height",
         "properties": {"radius_bottom": {"type": N}, "height": {"type": N}},
         "required": ["radius_bottom", "height"],
     },
     {
         "name": "create_torus",
-        "description": "Create a 3D torus",
+        "description": "Create a 3D torus by center point, major and minor radii",
         "properties": {"major_radius": {"type": N}, "minor_radius": {"type": N}},
         "required": ["major_radius", "minor_radius"],
     },
     {
         "name": "create_wedge",
-        "description": "Create a 3D wedge",
+        "description": "Create a 3D wedge by corner point and dimensions (width,depth,height)",
         "properties": {"x": {"type": N}, "y": {"type": N}, "z": {"type": N}},
         "required": ["x", "y", "z"],
     },
     {
         "name": "create_pyramid",
-        "description": "Create a 3D pyramid",
+        "description": "Create a 3D pyramid by base center, base radius, and height",
         "properties": {"height": {"type": N}, "sides": {"type": I}, "radius": {"type": N}},
         "required": ["height", "sides", "radius"],
     },
     # ── Boolean Operations ────────────────────────────────────
     {
         "name": "boolean_union",
-        "description": "Union two 3D solids",
+        "description": "Boolean union: merge two overlapping 3D solids into one",
         "properties": {"handle1": S2, "handle2": S2},
         "required": ["handle1", "handle2"],
     },
@@ -666,7 +678,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "boolean_intersect",
-        "description": "Intersect two 3D solids",
+        "description": "Boolean intersection: keep only overlapping volume of two solids",
         "properties": {"handle1": S2, "handle2": S2},
         "required": ["handle1", "handle2"],
     },
@@ -735,17 +747,26 @@ TOOL_DEFS: list[dict[str, Any]] = [
             "axis_y": {"type": N},
             "axis_z": {"type": N},
         },
-        "required": ["handle", "angle", "center_x", "center_y", "center_z", "axis_x", "axis_y", "axis_z"],
+        "required": [
+            "handle",
+            "angle",
+            "center_x",
+            "center_y",
+            "center_z",
+            "axis_x",
+            "axis_y",
+            "axis_z",
+        ],
     },
     {
         "name": "set_3d_view",
-        "description": "Set 3D view direction",
+        "description": "Set 3D viewport direction (top,front,right,isometric,etc.)",
         "properties": {"direction": S2, "render_mode": S2},
         "required": ["direction"],
     },
     {
         "name": "get_solid_properties",
-        "description": "Get 3D solid properties",
+        "description": "Get volume, surface area, and bounding box of a 3D solid",
         "properties": {"handle": S2},
         "required": ["handle"],
     },
@@ -790,7 +811,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_weld",
-        "description": "Create ISO weld symbol",
+        "description": "Create ISO welding symbol at (x,y) with type and size",
         "properties": {
             "swap_sides": {"type": B},
             "right_orientation": {"type": B},
@@ -851,7 +872,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     # ── Tables ────────────────────────────────────────────────
     {
         "name": "create_table",
-        "description": "Create a table",
+        "description": "Create a table at insertion point with specified rows and columns",
         "properties": {
             "rows": {"type": I},
             "columns": {"type": I},
@@ -901,7 +922,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     # ── Hatch ─────────────────────────────────────────────────
     {
         "name": "create_hatch",
-        "description": "Create hatch fill",
+        "description": "Create hatch pattern fill in a closed boundary",
         "properties": {
             "pattern": S2,
             "scale": S2,
@@ -915,20 +936,20 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "get_hatch_info",
-        "description": "Get hatch properties",
+        "description": "Get pattern name, scale, and angle of an existing hatch",
         "properties": {"handle": S2},
         "required": ["handle"],
     },
     {
         "name": "edit_hatch",
-        "description": "Edit hatch properties",
+        "description": "Modify pattern, scale, or angle of an existing hatch",
         "properties": {"handle": S2, "pattern": S2, "scale": S2},
         "required": ["handle"],
     },
     # ── Dimensions ────────────────────────────────────────────
     {
         "name": "create_aligned_dimension",
-        "description": "Create aligned dimension",
+        "description": "Create an aligned dimension between two points",
         "properties": {
             "x1": S2,
             "y1": S2,
@@ -942,7 +963,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_rotated_dimension",
-        "description": "Create rotated dimension",
+        "description": "Create a rotated dimension at specified angle",
         "properties": {
             "x1": S2,
             "y1": S2,
@@ -957,7 +978,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_radial_dimension",
-        "description": "Create radial dimension",
+        "description": "Create a radial dimension for a circle or arc",
         "properties": {"center_x": S2, "center_y": S2, "arc_x": S2, "arc_y": S2, "layer": S2},
         "required": ["center_x", "center_y", "arc_x", "arc_y"],
     },
@@ -969,7 +990,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_angular_dimension",
-        "description": "Create angular dimension",
+        "description": "Create an angular dimension between two lines",
         "properties": {
             "center_x": S2,
             "center_y": S2,
@@ -1634,7 +1655,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     # ── NURBS / IFC ──────────────────────────────────────────
     {
         "name": "create_nurb_curve",
-        "description": "NURBS-кривая по степени, контрольным точкам и узлам (требует .NET engine)",
+        "description": "Create NURBS curve by degree, control points, and knots (requires .NET engine)",
         "properties": {
             "degree": {"type": I},
             "periodic": {"type": B},
@@ -1650,7 +1671,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "create_nurb_surface",
-        "description": "NURBS-поверхность (требует .NET engine)",
+        "description": "Create NURBS surface by degree U/V and control points (requires .NET engine)",
         "properties": {
             "degree_u": {"type": I},
             "degree_v": {"type": I},
@@ -1670,7 +1691,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "modify_nurb",
-        "description": "Изменить NURBS-кривую/поверхность (требует .NET engine)",
+        "description": "Modify NURBS curve/surface control points and knots (requires .NET engine)",
         "properties": {
             "handle": S2,
             "control_points": {
@@ -1683,13 +1704,13 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "import_ifc",
-        "description": "Импортировать IFC-файл (требует .NET engine)",
+        "description": "Import IFC file at specified path (requires .NET engine)",
         "properties": {"path": S2},
         "required": ["path"],
     },
     {
         "name": "get_ifc_entities",
-        "description": "Получить IFC-объекты из чертежа (требует .NET engine)",
+        "description": "Get IFC entities from the current drawing (requires .NET engine)",
         "properties": {},
         "required": [],
     },
@@ -1825,7 +1846,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "delete_parameter",
-        "description": "Delete a named parameter",
+        "description": "Delete a named parameter from parametric design registry",
         "properties": {"name": S2},
         "required": ["name"],
     },

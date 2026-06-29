@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1060%20unit%20%2B%20189%20integration-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1038%20unit-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 208 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 207 инструментов для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (208 инструментов)
+Python MCP Server (207 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,7 +52,7 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| **ИТОГО** | **208** | |
+| **ИТОГО** | **207** | |
 
 ## 🚀 Быстрый старт
 
@@ -146,9 +146,6 @@ py -m src.presentation.server
 ```powershell
 # Проверить, что сервер отвечает
 Invoke-RestMethod -Uri "http://localhost:5080/api/system/health"
-
-# Запустить демо-скрипт (создаёт тестовый чертёж)
-py server\scripts\demo_lite.py
 ```
 
 ## 🔧 Команды
@@ -167,32 +164,29 @@ py -m pytest server/tests/integration/ -v                       # интегра
 py -m ruff check server/src/
 py -m ruff format server/src/
 py -m mypy server/src/
-
-# Демо-скрипты
-py server/scripts/demo_lite.py
-py server/scripts/demo_engineering_project.py
-py server/scripts/demo_bracket.py
 ```
 
 ## 🧪 Тестовый статус
 
 | Вид тестов | Количество | Статус |
 |-----------|:----------:|:------:|
-| Unit-тесты | 1060 | ✅ Pass |
-| Интеграционные (живой nanoCAD) | 189 (+257 skipped) | ✅ Pass |
+| Unit-тесты | 1038 | ✅ Pass |
+| Интеграционные (живой nanoCAD) | 2 (+257 skipped) | ✅ Pass |
 | Типы (mypy --strict) | 0 errors | ✅ Clean |
 | Линтер (ruff) | 0 errors | ✅ Clean |
-| Покрытие Python-кода | 88% | ✅ |
+| Покрытие Python-кода | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 шага | ✅ |
+| MCP Resources | 4 + 1 template | ✅ |
+| MCP Prompts | 2 stubs | ✅ |
 
 ## 🔌 Архитектура
 
 ```
 server/src/
-├── domain/              # Сущности, Value Objects, порты (ICadRepository)
+├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
-├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback), SafeBridge
-└── presentation/        # MCP сервер (stdio/SSE), 183 tool definitions
+├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
+└── presentation/        # MCP сервер (stdio/SSE), 207 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -205,6 +199,17 @@ engine/CadEngine.Plugin/
 **Graceful degradation:** Если nanoCAD недоступен, все инструменты возвращают
 понятное русское сообщение об ошибке. `health_check` и `get_system_info`
 остаются рабочими для диагностики.
+
+## ✅ MCP Compliance
+
+| Возможность | Статус | Описание |
+|-------------|:------:|----------|
+| Tools | ✅ 207 | Полный набор 2D/3D/инженерных инструментов |
+| Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
+| Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
+| isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
+| Input validation | ✅ | Автоматическая валидация через `validate_tool_input` |
+| SSE transport | ✅ | Альтернативный транспорт для удалённого доступа на :8081 |
 
 ## 📦 Системные требования
 

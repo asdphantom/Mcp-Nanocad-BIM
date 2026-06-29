@@ -12,7 +12,17 @@ import structlog
 from mcp.server import Server
 from mcp.server.sse import SseServerTransport
 from mcp.server.stdio import stdio_server
-from mcp.types import TextContent, Tool
+from mcp.types import (
+    CallToolResult,
+    Prompt,
+    PromptArgument,
+    PromptMessage,
+    Resource,
+    ResourceTemplate,
+    TextContent,
+    Tool,
+)
+from pydantic import AnyUrl
 
 from src.domain.exceptions import NanocadError
 from src.presentation.context import get_factory, get_repository
@@ -312,14 +322,12 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "create_profile": ("feature", "create_profile"),
     "create_extrude_feature": ("feature", "create_extrude_feature"),
     "create_revolve_feature": ("feature", "create_revolve_feature"),
-
     # ── Feature Tree Management (Phase P2) ──
     "get_feature_list": ("feature", "get_feature_list"),
     "suppress_feature": ("feature", "suppress_feature"),
     "unsuppress_feature": ("feature", "unsuppress_feature"),
     "edit_feature_parameter": ("feature", "edit_feature_parameter"),
     "delete_feature": ("feature", "delete_feature"),
-
     # Mesh / Viewport / Render
     "create_mesh": ("entity", "create_mesh"),
     "edit_mesh": ("entity", "edit_mesh"),
@@ -345,7 +353,6 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "stop_motion_preview": ("multicad", "stop_motion_preview"),
     "create_body_contour": ("multicad", "create_body_contour"),
     "check_3d_faces": ("multicad", "check_3d_faces"),
-
     # ── Parametric Design (server-side, no CAD needed) ──
     "set_parameter": ("parameter", "set_parameter"),
     "get_parameter": ("parameter", "get_parameter"),
@@ -356,14 +363,12 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "resolve_value": ("parameter", "resolve_value"),
     "load_design_table": ("parameter", "load_design_table"),
     "apply_design_row": ("parameter", "apply_design_row"),
-
     # ── History / Model Regeneration (server-side, no CAD needed) ──
     "record_tool_call": ("history", "record_tool_call"),
     "get_history": ("history", "get_history"),
     "delete_history_entry": ("history", "delete_entry"),
     "clear_history": ("history", "clear_history"),
     # replay_history is handled separately in _build_routing()
-
     # ── Configuration Management (server-side, no CAD needed) ──
     "save_configuration": ("parameter", "save_configuration"),
     "load_configuration": ("parameter", "load_configuration"),
@@ -526,18 +531,140 @@ def create_server() -> Server:
         return _get_tools(mode)
 
     @server.list_prompts()
-    async def handle_list_prompts() -> list[Any]:
-        return []
+    async def handle_list_prompts() -> list[Prompt]:
+        return [
+            Prompt(
+                name="create-part",
+                description="Step-by-step workflow for creating a standard engineering part",
+                arguments=[
+                    PromptArgument(
+                        name="part_type",
+                        description="Type of part to create: flange, shaft, bracket, or hub",
+                        required=True,
+                    ),
+                ],
+            ),
+            Prompt(
+                name="parametric-design",
+                description="Set up parametric design with named parameters and formulas",
+                arguments=[
+                    PromptArgument(
+                        name="parameter_count",
+                        description="Number of parameters to configure",
+                        required=False,
+                    ),
+                ],
+            ),
+        ]
+
+    @server.get_prompt()
+    async def handle_get_prompt(
+        name: str, arguments: dict[str, str] | None
+    ) -> list[PromptMessage] | None:
+        if name == "create-part":
+            part_type = (arguments or {}).get("part_type", "flange")
+            return [
+                PromptMessage(
+                    role="user",
+                    content=TextContent(
+                        type="text",
+                        text=f"Create a {part_type} part. "
+                        "Ask the user for dimensions and create the geometry using MCP tools.",
+                    ),
+                ),
+            ]
+        if name == "parametric-design":
+            return [
+                PromptMessage(
+                    role="user",
+                    content=TextContent(
+                        type="text",
+                        text="Set up parametric design. "
+                        "Ask the user for parameter names and initial values.",
+                    ),
+                ),
+            ]
+        return None
 
     @server.list_resources()
-    async def handle_list_resources() -> list[Any]:
-        return []
+    async def handle_list_resources() -> list[Resource]:
+        return [
+            Resource(
+                name="document",
+                uri=AnyUrl("nanocad://document"),
+                description="Active document metadata (name, path, entity count)",
+                mimeType="application/json",
+            ),
+            Resource(
+                name="layers",
+                uri=AnyUrl("nanocad://layers"),
+                description="List of all layers in the drawing",
+                mimeType="application/json",
+            ),
+            Resource(
+                name="system",
+                uri=AnyUrl("nanocad://system"),
+                description="nanoCAD version and system info",
+                mimeType="application/json",
+            ),
+            Resource(
+                name="parameters",
+                uri=AnyUrl("nanocad://parameters"),
+                description="Parametric design parameters with values and formulas",
+                mimeType="application/json",
+            ),
+        ]
+
+    @server.list_resource_templates()
+    async def handle_list_resource_templates() -> list[ResourceTemplate]:
+        return [
+            ResourceTemplate(
+                name="entities",
+                uriTemplate="nanocad://entities/{type}",
+                description="CAD entities filtered by type (line, circle, arc, etc.)",
+                mimeType="application/json",
+            ),
+        ]
+
+    @server.read_resource()
+    async def handle_read_resource(uri: str) -> str:
+        import json as _json
+
+        _ensure_connected()
+        repo = get_repository()
+
+        if uri == "nanocad://document":
+            return _json.dumps(
+                repo.get_document_info().model_dump(), default=str
+            )
+        if uri == "nanocad://layers":
+            return _json.dumps(
+                [l.model_dump() for l in repo.get_layers()], default=str
+            )
+        if uri == "nanocad://system":
+            return _json.dumps(
+                repo.get_system_info().model_dump(), default=str
+            )
+        if uri == "nanocad://parameters":
+            from src.domain.parameter_registry import get_parameter_registry
+
+            reg = get_parameter_registry()
+            return _json.dumps(reg.list_all_with_meta(), default=str)
+
+        if uri.startswith("nanocad://entities/"):
+            entity_type = uri.rsplit("/", maxsplit=1)[-1]
+            entities = repo.get_entities_by_type(entity_type)
+            return _json.dumps(
+                [e.model_dump() for e in entities], default=str
+            )
+
+        raise ValueError(f"Unknown resource URI: {uri}")
 
     @server.call_tool()
     async def handle_call_tool(
         name: str,
         arguments: dict[str, Any] | None,
-    ) -> list[TextContent]:
+    ) -> list[TextContent] | CallToolResult:
         args = arguments or {}
         log.info("Tool call", tool=name, args=args)
 
@@ -548,19 +675,22 @@ def create_server() -> Server:
             from src.presentation.context import reset as _reset_context
 
             _reset_context()
-            return [
-                TextContent(
-                    type="text",
-                    text=(
-                        "ERROR: Failed to connect to nanoCAD.\n"
-                        "Please check:\n"
-                        "  1. Is nanoCAD running?\n"
-                        "  2. Is the .NET plugin (CadEngine.Plugin) loaded?\n"
-                        "  3. Is port 5080 available?\n"
-                        "Run health_check for diagnostics."
-                    ),
-                )
-            ]
+            return CallToolResult(
+                content=[
+                    TextContent(
+                        type="text",
+                        text=(
+                            "ERROR: Failed to connect to nanoCAD.\n"
+                            "Please check:\n"
+                            "  1. Is nanoCAD running?\n"
+                            "  2. Is the .NET plugin (CadEngine.Plugin) loaded?\n"
+                            "  3. Is port 5080 available?\n"
+                            "Run health_check for diagnostics."
+                        ),
+                    )
+                ],
+                isError=True,
+            )
 
         # Capability discovery at list_tools() level handles tool filtering.
         # If a tool is called but CAD is unavailable, the use case or repository
@@ -569,13 +699,18 @@ def create_server() -> Server:
         handler = routing.get(name)
         if handler is None:
             log.warning("Unknown tool called", tool=name)
-            return [TextContent(type="text", text=f"UNKNOWN TOOL: {name}")]
-
+            return CallToolResult(
+                content=[TextContent(type="text", text=f"UNKNOWN TOOL: {name}")],
+                isError=True,
+            )
 
         try:
             validate_tool_input(name, args)
         except ToolValidationError as e:
-            return [TextContent(type="text", text=f"VALIDATION ERROR: {e}")]
+            return CallToolResult(
+                content=[TextContent(type="text", text=f"VALIDATION ERROR: {e}")],
+                isError=True,
+            )
 
         try:
             if asyncio.iscoroutinefunction(handler):
@@ -587,14 +722,24 @@ def create_server() -> Server:
         except NanocadError as e:
             msg = f"nanoCAD ERROR: {e}"
             log.warning("Tool error (nanoCAD)", tool=name, error=msg)
-            return [TextContent(type="text", text=msg)]
+            return CallToolResult(
+                content=[TextContent(type="text", text=msg)],
+                isError=True,
+            )
         except NotImplementedError as e:
             msg = f"NOT IMPLEMENTED: {e}. Requires .NET engine in nanoCAD."
             log.warning("Tool not implemented", tool=name, error=msg)
-            return [TextContent(type="text", text=msg)]
+            return CallToolResult(
+                content=[TextContent(type="text", text=msg)],
+                isError=True,
+            )
         except Exception as e:
             log.exception("Tool error", tool=name)
-            return [TextContent(type="text", text=f"ERROR: {e}")]
+            return CallToolResult(
+                content=[TextContent(type="text", text=f"ERROR: {e}")],
+                isError=True,
+            )
+
     return server
 
 

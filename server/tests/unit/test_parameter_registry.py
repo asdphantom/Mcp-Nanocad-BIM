@@ -374,3 +374,110 @@ class TestConfigurationManagement:
         assert reg.get("Height") == 120.0
 
         assert len(reg.list_configurations()) == 3
+
+
+class TestConcurrency:
+    """Tests for thread safety of ParameterRegistry."""
+
+    def test_concurrent_set_and_list(self) -> None:
+        import threading
+
+        reg = ParameterRegistry()
+        errors: list[Exception] = []
+
+        def setter() -> None:
+            try:
+                for i in range(100):
+                    reg.set(f"K{i}", i)
+            except Exception as e:
+                errors.append(e)
+
+        def lister() -> None:
+            try:
+                for _ in range(100):
+                    reg.list_all()
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=setter), threading.Thread(target=lister)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+
+    def test_concurrent_set_and_delete(self) -> None:
+        import threading
+
+        reg = ParameterRegistry()
+        for i in range(50):
+            reg.set(f"Del{i}", i)
+        errors: list[Exception] = []
+
+        def setter() -> None:
+            try:
+                for i in range(50):
+                    reg.set(f"New{i}", i)
+            except Exception as e:
+                errors.append(e)
+
+        def deleter() -> None:
+            try:
+                for i in range(50):
+                    reg.delete(f"Del{i}")
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=setter), threading.Thread(target=deleter)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+
+
+class TestEdgeCases:
+    """Tests for edge cases and boundary conditions."""
+
+    def test_get_nonexistent_returns_none(self) -> None:
+        reg = ParameterRegistry()
+        assert reg.get("nonexistent") is None
+
+    def test_delete_nonexistent_no_error(self) -> None:
+        reg = ParameterRegistry()
+        reg.delete("nonexistent")
+
+    def test_load_design_table_empty_csv(self) -> None:
+        reg = ParameterRegistry()
+        reg.load_design_table("")
+
+    def test_load_design_table_single_column(self) -> None:
+        reg = ParameterRegistry()
+        reg.load_design_table("Width\n")
+
+    def test_set_empty_key_raises_error(self) -> None:
+        reg = ParameterRegistry()
+        with pytest.raises(ExpressionError, match="Cannot parse"):
+            reg.set("", "abc")
+
+    def test_list_all_with_meta_all_entries(self) -> None:
+        reg = ParameterRegistry()
+        reg.set("Width", 100)
+        reg.set("Height", "=Width * 0.5")
+        meta = reg.list_all_with_meta()
+        assert len(meta) == 2
+        for entry in meta:
+            assert "name" in entry
+            assert "value" in entry
+
+    def test_save_configuration_overwrite(self) -> None:
+        reg = ParameterRegistry()
+        reg.set("Width", 100)
+        reg.save_configuration("Config")
+        reg.set("Width", 200)
+        reg.save_configuration("Config")
+        reg.set("Width", 300)
+        reg.load_configuration("Config")
+        assert reg.get("Width") == 200.0

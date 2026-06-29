@@ -895,9 +895,15 @@ class CadRepository(ICadRepository):
         return self._http.revolve_solid(handle, axis_x, axis_y, axis_z, dir_x, dir_y, dir_z, angle)
 
     def rotate_solid(
-        self, handle: str, angle: float,
-        cx: float = 0, cy: float = 0, cz: float = 0,
-        ax: float = 0, ay: float = 0, az: float = 1,
+        self,
+        handle: str,
+        angle: float,
+        cx: float = 0,
+        cy: float = 0,
+        cz: float = 0,
+        ax: float = 0,
+        ay: float = 0,
+        az: float = 1,
     ) -> bool:
         if self._mode != "full":
             msg = "Rotate solid requires .NET engine"

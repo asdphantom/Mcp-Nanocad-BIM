@@ -129,19 +129,23 @@ class HistoryRegistry:
             resolved_params = param_reg.parameters_for_bridge(entry.params)
             try:
                 result = await dispatcher(entry.tool_name, resolved_params)
-                results.append({
-                    "entry_id": entry.entry_id,
-                    "tool_name": entry.tool_name,
-                    "success": True,
-                    "result": result,
-                })
+                results.append(
+                    {
+                        "entry_id": entry.entry_id,
+                        "tool_name": entry.tool_name,
+                        "success": True,
+                        "result": result,
+                    }
+                )
             except Exception as exc:
-                results.append({
-                    "entry_id": entry.entry_id,
-                    "tool_name": entry.tool_name,
-                    "success": False,
-                    "error": str(exc),
-                })
+                results.append(
+                    {
+                        "entry_id": entry.entry_id,
+                        "tool_name": entry.tool_name,
+                        "success": False,
+                        "error": str(exc),
+                    }
+                )
         return results
 
 

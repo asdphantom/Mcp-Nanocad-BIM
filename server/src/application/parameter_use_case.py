@@ -18,9 +18,7 @@ class ParameterUseCase:
 
     # ── Parameter CRUD ────────────────────────────────────────────
 
-    def set_parameter(
-        self, name: str, value: str | float, description: str = ""
-    ) -> dict[str, Any]:
+    def set_parameter(self, name: str, value: str | float, description: str = "") -> dict[str, Any]:
         """Set a named parameter (literal, formula, or reference).
 
         Returns:
@@ -77,9 +75,7 @@ class ParameterUseCase:
 
     # ── Resolution ───────────────────────────────────────────────
 
-    def evaluate_expression(
-        self, expression: str
-    ) -> dict[str, Any]:
+    def evaluate_expression(self, expression: str) -> dict[str, Any]:
         """Evaluate a mathematical expression against current parameters.
 
         Returns:
@@ -131,9 +127,7 @@ class ParameterUseCase:
         except Exception as e:
             return {"error": str(e), "success": False}
 
-    def apply_design_row(
-        self, row_index: int, rows_json: list[dict[str, str]]
-    ) -> dict[str, Any]:
+    def apply_design_row(self, row_index: int, rows_json: list[dict[str, str]]) -> dict[str, Any]:
         """Apply a design table row as parameter values.
 
         Args:

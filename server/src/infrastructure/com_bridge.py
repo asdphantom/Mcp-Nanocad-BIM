@@ -2,9 +2,12 @@ from __future__ import annotations
 
 import logging
 import math
-from typing import Any
+from typing import TYPE_CHECKING, Any
 
 import pywintypes
+
+if TYPE_CHECKING:
+    from src.domain.protocols import ComApplication, ComDocument, ComModelSpace
 
 logger = logging.getLogger(__name__)
 
@@ -116,9 +119,14 @@ class NanoCadComBridge:
             self._ms = self._doc.ModelSpace
             self._util = self._doc.Utility
             return True
-        except Exception:
+        except pywintypes.com_error as e:
+            logger.warning("refresh_document failed: %s", e)
             self._connected = False
             return False
+        except Exception as e:
+            logger.exception("refresh_document: unexpected error: %s", e)
+            self._connected = False
+            raise
 
     # ── COM Entity Creation Wrappers ───────────────────────────
 
@@ -129,9 +137,12 @@ class NanoCadComBridge:
             pt2 = _to_safe_array(self._util, [x2, y2, 0.0])
             ent = self._ms.AddLine(pt1, pt2)
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_line failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_line: unexpected error: %s", e)
+            raise
 
     def com_add_circle(self, cx: float, cy: float, radius: float) -> str | None:
         """Add a circle via COM. Returns handle string or None on error."""
@@ -139,9 +150,12 @@ class NanoCadComBridge:
             center = _to_safe_array(self._util, [cx, cy, 0.0])
             ent = self._ms.AddCircle(center, radius)
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_circle failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_circle: unexpected error: %s", e)
+            raise
 
     def com_add_arc(
         self,
@@ -158,11 +172,16 @@ class NanoCadComBridge:
             ea = math.radians(end_angle)
             ent = self._ms.AddArc(center, radius, sa, ea)
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_arc failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_arc: unexpected error: %s", e)
+            raise
 
-    def com_add_polyline(self, vertices: list[tuple[float, float]], closed: bool = False) -> str | None:
+    def com_add_polyline(
+        self, vertices: list[tuple[float, float]], closed: bool = False
+    ) -> str | None:
         """Add a lightweight polyline via COM. Returns handle string or None on error."""
         try:
             flat = []
@@ -173,9 +192,12 @@ class NanoCadComBridge:
             if closed:
                 ent.Closed = True
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_polyline failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_polyline: unexpected error: %s", e)
+            raise
 
     def com_add_text(
         self,
@@ -189,9 +211,12 @@ class NanoCadComBridge:
             ins = _to_safe_array(self._util, [x, y, 0.0])
             ent = self._ms.AddText(content, ins, height)
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_text failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_text: unexpected error: %s", e)
+            raise
 
     def com_add_point(self, x: float, y: float) -> str | None:
         """Add a point via COM. Returns handle string or None on error."""
@@ -199,9 +224,12 @@ class NanoCadComBridge:
             pt = _to_safe_array(self._util, [x, y, 0.0])
             ent = self._ms.AddPoint(pt)
             return str(ent.Handle)
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_point failed: %s", e)
             return None
+        except Exception as e:
+            logger.exception("com_add_point: unexpected error: %s", e)
+            raise
 
     def com_delete_entity(self, handle: str) -> bool:
         """Delete an entity by handle via COM."""
@@ -209,9 +237,12 @@ class NanoCadComBridge:
             ent = self._doc.HandleToObject(handle)
             ent.Delete()
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_delete_entity(%s) failed: %s", handle, e)
             return False
+        except Exception as e:
+            logger.exception("com_delete_entity(%s): unexpected error: %s", handle, e)
+            raise
 
     def com_get_layers(self) -> list[dict[str, Any]]:
         """Get all layers via COM."""
@@ -229,8 +260,11 @@ class NanoCadComBridge:
                         "linetype": str(l_obj.Linetype),
                     }
                 )
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_get_layers failed: %s", e)
+        except Exception as e:
+            logger.exception("com_get_layers: unexpected error: %s", e)
+            raise
         return layers
 
     def com_add_layer(self, name: str) -> bool:
@@ -238,18 +272,24 @@ class NanoCadComBridge:
         try:
             self._doc.Layers.Add(name)
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_add_layer(%s) failed: %s", name, e)
             return False
+        except Exception as e:
+            logger.exception("com_add_layer(%s): unexpected error: %s", name, e)
+            raise
 
     def com_set_current_layer(self, name: str) -> bool:
         """Set the current layer via COM."""
         try:
             self._doc.ActiveLayer = self._doc.Layers.Item(name)
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_set_current_layer(%s) failed: %s", name, e)
             return False
+        except Exception as e:
+            logger.exception("com_set_current_layer(%s): unexpected error: %s", name, e)
+            raise
 
     def com_save_document(self, path: str | None = None) -> bool:
         """Save the current document via COM."""
@@ -259,9 +299,12 @@ class NanoCadComBridge:
             else:
                 self._doc.Save()
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_save_document failed: %s", e)
             return False
+        except Exception as e:
+            logger.exception("com_save_document: unexpected error: %s", e)
+            raise
 
     def com_export_pdf(self, path: str) -> bool:
         """Export current document to PDF via COM."""
@@ -270,35 +313,47 @@ class NanoCadComBridge:
             # COM API: doc.Plot.PlotToDevice or doc.Export
             self._doc.Export(path, "PDF")
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_export_pdf failed: %s", e)
             return False
+        except Exception as e:
+            logger.exception("com_export_pdf: unexpected error: %s", e)
+            raise
 
     def com_get_system_variable(self, name: str) -> str | None:
         """Get a system variable via COM."""
         try:
             return str(self._doc.GetVariable(name))
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_get_system_variable(%s) failed: %s", name, e)
             return None
+        except Exception as e:
+            logger.exception("com_get_system_variable(%s): unexpected error: %s", name, e)
+            raise
 
     def com_set_system_variable(self, name: str, value: str) -> bool:
         """Set a system variable via COM."""
         try:
             self._doc.SetVariable(name, value)
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_set_system_variable(%s) failed: %s", name, e)
             return False
+        except Exception as e:
+            logger.exception("com_set_system_variable(%s): unexpected error: %s", name, e)
+            raise
 
     def com_zoom_extents(self) -> bool:
         """Zoom to drawing extents via COM."""
         try:
             self._doc.Application.ZoomExtents()
             return True
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_zoom_extents failed: %s", e)
             return False
+        except Exception as e:
+            logger.exception("com_zoom_extents: unexpected error: %s", e)
+            raise
 
     def com_get_document_info(self) -> dict[str, Any]:
         """Get document info via COM."""
@@ -313,6 +368,9 @@ class NanoCadComBridge:
             info["path"] = str(self._doc.FullName) if self._doc.FullName else ""
             info["is_saved"] = self._doc.Saved
             info["entities_count"] = self._ms.Count
-        except Exception as e:
+        except pywintypes.com_error as e:
             logger.warning("com_get_document_info failed: %s", e)
+        except Exception as e:
+            logger.exception("com_get_document_info: unexpected error: %s", e)
+            raise
         return info

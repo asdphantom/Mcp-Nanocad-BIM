@@ -70,6 +70,7 @@ def _evaluate_ast(node: ast.AST, context: Mapping[str, float]) -> float:
             return float(round(args[0]))
         if func_name == "sqrt" and len(args) == 1:
             import math
+
             return float(math.sqrt(args[0]))
         if func_name == "abs" and len(args) == 1:
             return float(abs(args[0]))
@@ -291,11 +292,7 @@ class ParameterRegistry:
             tree = ast.parse(expression.strip(), mode="eval")
         except SyntaxError:
             return []
-        return [
-            node.id
-            for node in ast.walk(tree)
-            if isinstance(node, ast.Name)
-        ]
+        return [node.id for node in ast.walk(tree) if isinstance(node, ast.Name)]
 
     def _resolve_with_cycle_check(self, name: str, visited: Set[str]) -> float:
         if name in visited:
@@ -316,17 +313,13 @@ class ParameterRegistry:
             ref_names = self._extract_names(expr)
             for ref_name in ref_names:
                 if ref_name in visited:
-                    raise ExpressionError(
-                        f"Circular dependency for parameter: {name}"
-                    )
+                    raise ExpressionError(f"Circular dependency for parameter: {name}")
             # Build context with cached values + recursively resolved formulas
             context: dict[str, float] = dict(self._values)
             for pname in self._formulas:
                 if pname not in context and pname not in visited:
                     try:
-                        context[pname] = self._resolve_with_cycle_check(
-                            pname, visited
-                        )
+                        context[pname] = self._resolve_with_cycle_check(pname, visited)
                     except ExpressionError as exc:
                         # Re-raise cycle detection errors; skip unresolvable ones
                         if "Circular" in str(exc):

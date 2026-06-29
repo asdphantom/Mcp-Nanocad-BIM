@@ -57,9 +57,7 @@ def validate_project_path(directory: str, filename: str | None = None) -> str:
     resolved = (base / raw).resolve()
 
     if not str(resolved).startswith(str(base)):
-        raise ValidationError(
-            f"Path traversal blocked: {directory} escapes base directory {base}"
-        )
+        raise ValidationError(f"Path traversal blocked: {directory} escapes base directory {base}")
     if filename:
         if ".." in filename or "/" in filename or chr(92) in filename:
             raise ValidationError(f"Invalid filename: {filename}")
@@ -167,7 +165,7 @@ class HttpCadBridge:
             logger.warning("HTTP request failed %s %s: %s", method, path, e)
             return None
         except json.JSONDecodeError as e:
-            logger.exception("Invalid JSON response %s %s: %s", method, path, e)
+            logger.error("Invalid JSON response %s %s: %s", method, path, e)
             return None
 
     @staticmethod
@@ -582,16 +580,27 @@ class HttpCadBridge:
         return self._result_success(result)
 
     def rotate_solid(
-        self, handle: str, angle: float,
-        cx: float = 0, cy: float = 0, cz: float = 0,
-        ax: float = 0, ay: float = 0, az: float = 1,
+        self,
+        handle: str,
+        angle: float,
+        cx: float = 0,
+        cy: float = 0,
+        cz: float = 0,
+        ax: float = 0,
+        ay: float = 0,
+        az: float = 1,
     ) -> bool:
         result = self._request(
-            "POST", f"/api/solid/{handle}/rotate3d",
+            "POST",
+            f"/api/solid/{handle}/rotate3d",
             json_body={
                 "angle": angle,
-                "center_x": cx, "center_y": cy, "center_z": cz,
-                "axis_x": ax, "axis_y": ay, "axis_z": az,
+                "center_x": cx,
+                "center_y": cy,
+                "center_z": cz,
+                "axis_x": ax,
+                "axis_y": ay,
+                "axis_z": az,
             },
         )
         return self._result_success(result)

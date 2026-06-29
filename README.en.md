@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1060%20unit%20%2B%20189%20integration-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1038%20unit-green.svg)]()
 
-**MCP server for nanoCAD 26 automation** — 208 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
+**MCP server for nanoCAD 26 automation** — 207 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
 
 Works via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) with any MCP client: opencode, Claude Desktop, Cursor, and more.
 
@@ -13,7 +13,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (208 tools)
+Python MCP Server (207 tools)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -50,7 +50,7 @@ nanoCAD — drawing
 | NURBS / IFC | 5 | NURBS curves, surfaces, IFC import/export |
 | MultiCAD API | 12 | grid axes, rooms, parametric objects, reactors |
 | Other | 12 | mesh, selection, trim, extend, offset, viewport, render |
-| **TOTAL** | **208** | |
+| **TOTAL** | **207** | |
 
 ## 🚀 Quick Start
 
@@ -144,9 +144,6 @@ py -u -m src.presentation.server
 ```powershell
 # Check if the plugin responds
 Invoke-RestMethod -Uri "http://localhost:5080/api/system/health"
-
-# Run a demo script (creates a test drawing)
-py server\scripts\demo_lite.py
 ```
 
 ## 🔧 Commands
@@ -171,21 +168,23 @@ py -m mypy server/src/
 
 | Test Type | Count | Status |
 |-----------|:-----:|:------:|
-| Unit tests | 1060 | ✅ Pass |
-| Integration (live nanoCAD) | 189 (+257 skipped) | ✅ Pass |
+| Unit tests | 1038 | ✅ Pass |
+| Integration (live nanoCAD) | 2 (+257 skipped) | ✅ Pass |
 | Types (mypy --strict) | 0 errors | ✅ Clean |
 | Linter (ruff) | 0 errors | ✅ Clean |
-| Python code coverage | 88% | ✅ |
+| Python code coverage | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 steps | ✅ |
+| MCP Resources | 4 + 1 template | ✅ |
+| MCP Prompts | 2 stubs | ✅ |
 
 ## 🔌 Architecture
 
 ```
 server/src/
-├── domain/              # Entities, Value Objects, ports (ICadRepository)
+├── domain/              # Entities, Value Objects, ports (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, business logic
-├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback), SafeBridge
-└── presentation/        # MCP server (stdio/SSE), 208 tool definitions
+├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
+└── presentation/        # MCP server (stdio/SSE), 207 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# services (EntityService, SolidService, SymbolService ...)
@@ -195,7 +194,18 @@ engine/CadEngine.Plugin/
 
 **Connection priority:** HTTP (.NET engine) → COM → offline
 
-**Graceful degradation:** When nanoCAD is unavailable, all tools return a descriptive error message in Russian (or English with `--lang en`). `health_check` and `get_system_info` remain functional offline.
+**Graceful degradation:** When nanoCAD is unavailable, all tools return a descriptive error message. `health_check` and `get_system_info` remain functional offline.
+
+## ✅ MCP Compliance
+
+| Feature | Status | Description |
+|---------|:------:|-------------|
+| Tools | ✅ 207 | Full 2D/3D/engineering tool set |
+| Resources | ✅ 4 + 1 template | Read document, layers, system, parameters, entities |
+| Prompts | ✅ 2 stubs | `create-part` and `parametric-design` for guided workflows |
+| isError | ✅ | All error paths return `CallToolResult(isError=True)` |
+| Input validation | ✅ | Automatic validation via `validate_tool_input` |
+| SSE transport | ✅ | Alternative transport for remote access on :8081 |
 
 ## 📦 System Requirements
 

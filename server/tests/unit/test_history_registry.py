@@ -187,3 +187,54 @@ class TestHistoryContextVar:
         set_history_registry(new_reg)
         assert get_history_registry() is new_reg
         assert get_history_registry() is not original
+
+
+class TestConcurrency:
+    """Tests for thread safety of HistoryRegistry."""
+
+    def test_concurrent_record_and_get_all(self) -> None:
+        import threading
+
+        reg = HistoryRegistry()
+        errors: list[Exception] = []
+
+        def recorder() -> None:
+            try:
+                for i in range(100):
+                    reg.record(f"tool_{i}", {"i": i})
+            except Exception as e:
+                errors.append(e)
+
+        def reader() -> None:
+            try:
+                for _ in range(100):
+                    reg.get_all()
+            except Exception as e:
+                errors.append(e)
+
+        threads = [threading.Thread(target=recorder), threading.Thread(target=reader)]
+        for t in threads:
+            t.start()
+        for t in threads:
+            t.join()
+
+        assert errors == []
+        assert reg.count() == 100
+
+
+class TestEdgeCases:
+    """Tests for edge cases and boundary conditions."""
+
+    def test_record_empty_tool_name(self) -> None:
+        reg = HistoryRegistry()
+        entry_id = reg.record("", {"x": 1})
+        assert isinstance(entry_id, str)
+
+    def test_get_all_after_delete_count(self) -> None:
+        reg = HistoryRegistry()
+        reg.record("tool_a", {})
+        reg.record("tool_b", {})
+        reg.record("tool_c", {})
+        all_entries = reg.get_all()
+        reg.delete(all_entries[0].entry_id)
+        assert reg.count() == 2

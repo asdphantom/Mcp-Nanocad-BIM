@@ -304,9 +304,7 @@ class ICadRepository(ABC):
     def boolean_intersect(self, h1: str, h2: str) -> str | None: ...
 
     @abstractmethod
-    def extrude_solid(
-        self, handle: str, height: float, taper_angle: float = 0
-    ) -> str | None: ...
+    def extrude_solid(self, handle: str, height: float, taper_angle: float = 0) -> str | None: ...
 
     @abstractmethod
     def revolve_solid(
@@ -323,20 +321,22 @@ class ICadRepository(ABC):
 
     @abstractmethod
     def rotate_solid(
-        self, handle: str, angle: float,
-        cx: float = 0, cy: float = 0, cz: float = 0,
-        ax: float = 0, ay: float = 0, az: float = 1,
+        self,
+        handle: str,
+        angle: float,
+        cx: float = 0,
+        cy: float = 0,
+        cz: float = 0,
+        ax: float = 0,
+        ay: float = 0,
+        az: float = 1,
     ) -> bool: ...
 
     @abstractmethod
-    def move_solid(
-        self, handle: str, dx: float, dy: float, dz: float = 0
-    ) -> bool: ...
+    def move_solid(self, handle: str, dx: float, dy: float, dz: float = 0) -> bool: ...
 
     @abstractmethod
-    def set_3d_view(
-        self, direction: str, render_mode: str = "wireframe"
-    ) -> bool: ...
+    def set_3d_view(self, direction: str, render_mode: str = "wireframe") -> bool: ...
 
     @abstractmethod
     def get_solid_properties(self, handle: str) -> dict[str, Any] | None: ...

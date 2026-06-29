@@ -569,9 +569,15 @@ class SolidUseCase:
         )
 
     def rotate_solid(
-        self, handle: str, angle: float,
-        center_x: float = 0, center_y: float = 0, center_z: float = 0,
-        axis_x: float = 0, axis_y: float = 0, axis_z: float = 1,
+        self,
+        handle: str,
+        angle: float,
+        center_x: float = 0,
+        center_y: float = 0,
+        center_z: float = 0,
+        axis_x: float = 0,
+        axis_y: float = 0,
+        axis_z: float = 1,
     ) -> dict[str, Any]:
         success = self._repo.rotate_solid(
             handle, angle, center_x, center_y, center_z, axis_x, axis_y, axis_z

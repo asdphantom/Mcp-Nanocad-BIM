@@ -524,6 +524,10 @@ def create_server() -> Server:
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
         try:
+            _ensure_connected()
+        except Exception:
+            log.debug("list_tools: connection attempt failed, falling back to offline")
+        try:
             repo = get_repository()
             mode = repo.connection_mode
         except Exception:

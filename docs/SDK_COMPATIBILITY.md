@@ -15,11 +15,16 @@ API, not a complete list of every public type in `ncBIMSmgd.dll`.
 | `create_bim_window` | `BuildingOpeningFactory.Create`, `ConnectToSurface` | Yes, opening E67 in wall E55 |
 | `create_bim_slab` | `BuildingSlabFactory.Create` | Yes, `BuildingSlab` |
 | `create_bim_roof` | `BuildingRoofFactory.Create` | Yes, `BuildingRoof` |
+| `create_bim_dome_roof` | `BuildingRoofDomeFactory.Create` | Yes, `BuildingRoofDome` |
+| `create_bim_loft_roof` | `BuildingRoofLoftFactory.Create` | Yes, `BuildingRoofLoft` |
+| `create_bim_sweep_roof` | `BuildingRoofSweepFactory.Create` | Yes, `BuildingRoofSweep` |
 | `create_bim_space` | `SpaceEntityFactory.Create` | Yes, `SpaceEntity` |
 
 The older `create_wall_solid`, `create_monolithic_slab`, `complete_window_opening`
 and similar construction helpers make DWG geometry. They are separate from the
 native SDK tools above.
+
+See [all 102 sample commands](SDK_COMMANDS.md) for exact names and status.
 
 ## SDK sample inventory
 
@@ -30,7 +35,7 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 | Area | Sample group | Commands in SDK sample | Native MCP coverage |
 |---|---|---:|---|
 | Architecture | BuildingOpeningUI | 4 | Library window list and insertion |
-| Architecture | BuildingRoofUI | 12 | Create standard roof |
+| Architecture | BuildingRoofUI | 12 | Create standard, dome, loft and sweep roofs |
 | Architecture | BuildingSlabUI | 4 | Create slab |
 | Architecture | BuildingWallUI | 2 | Create linear wall |
 | Architecture | SpaceUI | 3 | Create space |
@@ -57,8 +62,8 @@ need multiple MCP tools or may be interactive and require redesign for automatio
   Строительство 26. The Python COM fallback cannot create these SDK entities.
 - Wall `wall_type` and `level` are explicitly rejected until their SDK mappings
   are verified. Space creation currently uses elevation zero.
-- The roof tool implements the standard contour roof factory; dome, loft,
-  sweep and slope roof factories are still pending.
+- Standard, dome, loft and sweep roof factories are implemented; slope roof
+  factories and editing commands are still pending.
 - The generic library search supports six known SDK categories and a name
   filter, returning at most 100 matches. The window catalog filters names
   containing `Окно`. The insertion
@@ -67,7 +72,7 @@ need multiple MCP tools or may be interactive and require redesign for automatio
   or a caller-provided `NCadBIMSDK` path. The installed nanoCAD libraries are
   resolved through `NanoCadPlatformRoot`.
 
-The next implementation groups are roof variants, contour editing, grids,
+The next implementation groups are roof slopes, contour editing, grids,
 material and object libraries, project management, structure and reinforcement,
 and parametric objects. Each group needs a typed API contract and live checks
 before it can be marked compatible.

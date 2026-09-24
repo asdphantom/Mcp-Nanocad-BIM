@@ -213,6 +213,11 @@ namespace CadEngine
                 var req = ParseBody<BimWindowRequest>(request);
                 return req != null ? BimWindowService.Create(req) : BadRequest();
             }
+            if (method == "POST" && path == "/api/bim/roof-variant")
+            {
+                var req = ParseBody<BimRoofVariantRequest>(request);
+                return req != null ? BimRoofVariantService.Create(req) : BadRequest();
+            }
             if (method == "POST" && path == "/api/bim/contour")
             {
                 var req = ParseBody<BimContourRequest>(request);

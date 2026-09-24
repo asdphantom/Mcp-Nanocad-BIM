@@ -55,6 +55,16 @@ namespace CadEngine
         public double SillHeight { get; set; } = 700;
         public double OpeningDepth { get; set; } = 120;
     }
+    public class BimRoofVariantRequest
+    {
+        public string Kind { get; set; } = "";
+        public double[][] ContourA { get; set; } = Array.Empty<double[]>();
+        public double[][] ContourB { get; set; } = Array.Empty<double[]>();
+        public double BaseZ { get; set; }
+        public double Thickness { get; set; }
+        public double Height { get; set; }
+    }
+
     public class BimContourRequest
     {
         public string Kind { get; set; } = "";

@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1088%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1093%20passed-green.svg)]()
 
 **MCP server for nanoCAD 26 automation** — 207 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
 
@@ -168,7 +168,7 @@ py -m mypy server/src/
 
 | Test Type | Count | Status |
 |-----------|:-----:|:------:|
-| Automated tests | 1088 passed, 257 skipped | ✅ |
+| Automated tests | 1093 passed, 257 skipped | ✅ |
 | Native BIM objects in nanoCAD | wall, window, slab, roof, space | ✅ Verified |
 | Python code coverage | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 steps | ✅ |
@@ -248,4 +248,4 @@ MIT License — open source project.
 
 ## Native nBIM SDK 26 compatibility
 
-Native wall, library window, slab, roof, space and category search tools are available in nanoCAD BIM Строительство 26. See the [SDK compatibility matrix](docs/SDK_COMPATIBILITY.md) for verified coverage and remaining sample groups.
+Native wall, library window, slab, standard/dome/loft/sweep roof, space and category search tools are available in nanoCAD BIM Строительство 26. See the [SDK compatibility matrix](docs/SDK_COMPATIBILITY.md) for verified coverage and remaining sample groups.

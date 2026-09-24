@@ -203,6 +203,10 @@ class HttpCadBridge:
     def create_bim_window(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         """Place a library window into an existing native BIM wall."""
         return self._request("POST", "/api/bim/window", json_body=payload)
+    def create_bim_roof_variant(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Create a native dome, loft or sweep roof."""
+        return self._request("POST", "/api/bim/roof-variant", json_body=payload)
+
     def create_bim_contour(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         """Create native BIM slab, roof or space from an XY contour."""
         return self._request("POST", "/api/bim/contour", json_body=payload)

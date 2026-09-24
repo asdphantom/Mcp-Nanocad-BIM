@@ -1894,6 +1894,24 @@ TOOL_DEFS: list[dict[str, Any]] = [
         },
         "required": ["category"],
     },
+    {
+        "name": "create_bim_dome_roof",
+        "description": "Create a native dome roof from an XY contour and shell thickness (mm)",
+        "properties": {"contour": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3}, "thickness": {"type": N}, "base_z": {"type": N}},
+        "required": ["contour", "thickness"],
+    },
+    {
+        "name": "create_bim_loft_roof",
+        "description": "Create a native loft roof between two XY contours (mm)",
+        "properties": {"contour_a": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3}, "contour_b": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3}, "height": {"type": N}, "base_z": {"type": N}},
+        "required": ["contour_a", "contour_b", "height"],
+    },
+    {
+        "name": "create_bim_sweep_roof",
+        "description": "Create a native sweep roof from profile and path contours (mm)",
+        "properties": {"contour_a": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3}, "contour_b": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3}, "base_z": {"type": N}},
+        "required": ["contour_a", "contour_b"],
+    },
     # Native contour based entities from ncBIM SDK 26.
     {
         "name": "create_bim_slab",
@@ -2076,7 +2094,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 222, f"Expected 222 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 225, f"Expected 225 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

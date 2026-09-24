@@ -77,7 +77,7 @@ nanoCAD — чертёж
 
 ```powershell
 # Клонировать репозиторий
-git clone https://github.com/Evans-Sense/nanoCAD-MCP.git
+git clone https://github.com/asdphantom/Mcp-Nanocad-BIM.git
 cd nanoCAD-MCP
 
 # Установить Python-пакет

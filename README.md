@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1038%20unit-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1085%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 207 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 221 инструмент для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (207 инструментов)
+Python MCP Server (221 инструмент)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,7 +52,24 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| **ИТОГО** | **207** | |
+| BIM Строительство | 13 | DWG-конструкции и нативные стены, окна, перекрытия, крыши, помещения |
+| **ИТОГО** | **221** | |
+
+
+## nanoCAD BIM Строительство
+
+В редакции BIM Строительство доступны команды `get_construction_status`,
+`create_wall_solid`, `create_monolithic_slab`, `insert_construction_plan`,
+`set_construction_material`, `complete_window_opening` и
+`create_pitched_roof_panel`, `create_native_roof`. Размеры задаются в миллиметрах. Для проёма окна
+`complete_window_opening` достраивает подоконную часть стены и перемычку
+в уже существующем сквозном разрыве стены.
+
+Геометрия этих команд — редактируемые 3D-тела DWG с назначенным материалом.
+Перечисленные выше команды создают DWG-геометрию. Нативные объекты nBIM
+создают отдельные инструменты `create_bim_*`, описанные ниже. Для установленной BIM-редакции переключение 3D-вида
+через старый .NET endpoint отключено: на данной версии оно аварийно закрывает
+процесс. Вид можно сменить в интерфейсе nanoCAD.
 
 ## 🚀 Быстрый старт
 
@@ -60,7 +77,7 @@ nanoCAD — чертёж
 
 ```powershell
 # Клонировать репозиторий
-git clone https://github.com/nanoCAD/nanoCAD-MCP.git
+git clone https://github.com/Evans-Sense/nanoCAD-MCP.git
 cd nanoCAD-MCP
 
 # Установить Python-пакет
@@ -72,7 +89,7 @@ pip install -e ".[sse,dev]"   # для SSE транспорта и разраб�
 ### 2. Установка .NET плагина
 
 **Вариант А (рекомендуется):** В репозитории уже есть собранный плагин —
-`engine\dist\CadEngine.Plugin.dll` (Release, 254 KB). Сборка не требуется.
+`engine\dist\CadEngine.Plugin.dll` (Release). Сборка не требуется.
 
 **Вариант Б:** Собрать из исходников:
 ```powershell
@@ -84,7 +101,7 @@ dotnet build engine\CadEngine.Plugin\CadEngine.Plugin.csproj --configuration Rel
 Добавьте путь к DLL в файл `nCad.ini` (раздел `[\NetModules]`):
 
 ```
-F:\full\path\to\nanoCAD-MCP\engine\CadEngine.Plugin\bin\Debug\CadEngine.Plugin.dll
+C:\full\path\to\nanoCAD-MCP\engine\dist\CadEngine.Plugin.dll
 ```
 
 ### 4. Запуск
@@ -170,10 +187,8 @@ py -m mypy server/src/
 
 | Вид тестов | Количество | Статус |
 |-----------|:----------:|:------:|
-| Unit-тесты | 1038 | ✅ Pass |
-| Интеграционные (живой nanoCAD) | 2 (+257 skipped) | ✅ Pass |
-| Типы (mypy --strict) | 0 errors | ✅ Clean |
-| Линтер (ruff) | 0 errors | ✅ Clean |
+| Автоматические тесты | 1085 passed, 257 skipped | ✅ |
+| Нативные BIM объекты в nanoCAD | стена, окно, перекрытие, крыша, помещение | ✅ Проверено |
 | Покрытие Python-кода | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 шага | ✅ |
 | MCP Resources | 4 + 1 template | ✅ |
@@ -186,7 +201,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 207 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 221 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -204,7 +219,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 207 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 221 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
@@ -248,3 +263,44 @@ MIT License — проект с открытым исходным кодом.
 - Разработчикам [nanoCAD](https://nanocad.ru) и MultiCAD API
 - Сообществу [Model Context Protocol](https://modelcontextprotocol.io/)
 - Всем контрибьюторам и тестировщикам
+## Нативные инструменты nBIM SDK 26
+
+`create_bim_wall` создаёт `LinearBuildingWall` через
+`LinearBuildingWallFactory.Create` из `ncBIMSmgd.dll`. Параметры:
+`x1, y1, x2, y2, base_z, height, thickness` (миллиметры).
+`wall_type` и `level` пока отклоняются с явной ошибкой: их соответствие
+параметрам SDK не проверено. Стена не заменяется 3D-телом.
+
+Для сборки плагина нужны установленная Платформа nanoCAD 26,
+SDK .NET 8 (для сборки проекта net6.0-windows) и nBIM SDK 26. Распакуйте архив nBIM SDK в
+`work/ncBIM_SDK_26` либо задайте свойство MSBuild `NCadBIMSDK`
+с путём к распакованному SDK. Проект по умолчанию ссылается на
+платформенные DLL из `C:\Program Files\Nanosoft\nanoCAD x64 26.0`;
+путь можно переопределить свойством `NanoCadPlatformRoot`.
+
+Пример вызова MCP:
+
+```json
+{"name":"create_bim_wall","arguments":{"x1":0,"y1":0,"x2":6000,"y2":0,"base_z":0,"height":3300,"thickness":300}}
+```
+
+`list_bim_windows` получает объекты библиотеки, а `create_bim_window` вставляет
+нативный `BuildingOpening` в указанную стену и связывает проём со стеной.
+`create_bim_slab`, `create_bim_roof` и `create_bim_space` создают нативные
+контурные объекты SDK по массиву точек `[[x,y], ...]`. Все размеры в миллиметрах;
+угол крыши задаётся в градусах.
+
+Полная [матрица совместимости SDK](docs/SDK_COMPATIBILITY.md) показывает
+реализованные фабрики и остальные разделы архива. SDK содержит 102 команды в
+примерах; они ещё не все доступны через MCP.
+
+После сохранения чертежей и закрытия nanoCAD скопируйте собранный файл:
+
+```powershell
+Copy-Item engine\CadEngine.Plugin\bin\Release\CadEngine.Plugin.dll engine\dist\CadEngine.Plugin.dll -Force
+```
+
+В текущей установке `nCad.ini` уже загружает DLL из `engine/dist`.
+Запустите nanoCAD BIM Строительство 26 с новым тестовым чертежом
+и проверьте, что результат содержит нативный тип объекта, например
+`entity_type: LinearBuildingWall`.

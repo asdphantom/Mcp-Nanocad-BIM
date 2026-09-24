@@ -196,6 +196,24 @@ namespace CadEngine
                 return req != null ? _systemService.SetVariable(varSetName!, req.Value) : BadRequest();
             }
 
+            if (method == "GET" && path == "/api/bim/windows")
+                return BimWindowService.ListWindows();
+
+            if (method == "POST" && path == "/api/bim/window")
+            {
+                var req = ParseBody<BimWindowRequest>(request);
+                return req != null ? BimWindowService.Create(req) : BadRequest();
+            }
+            if (method == "POST" && path == "/api/bim/contour")
+            {
+                var req = ParseBody<BimContourRequest>(request);
+                return req != null ? BimContourService.Create(req) : BadRequest();
+            }
+            if (method == "POST" && path == "/api/bim/wall")
+            {
+                var req = ParseBody<BimWallRequest>(request);
+                return req != null ? BimWallService.Create(req) : BadRequest();
+            }
             // Document
             if (method == "GET" && path == "/api/document")
                 return _documentService.GetInfo();

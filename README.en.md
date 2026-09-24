@@ -2,7 +2,7 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1038%20unit-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1085%20passed-green.svg)]()
 
 **MCP server for nanoCAD 26 automation** — 207 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
 
@@ -58,7 +58,7 @@ nanoCAD — drawing
 
 ```powershell
 # Clone the repository
-git clone https://github.com/nanoCAD/nanoCAD-MCP.git
+git clone https://github.com/Evans-Sense/nanoCAD-MCP.git
 cd nanoCAD-MCP
 
 # Install Python package
@@ -168,10 +168,8 @@ py -m mypy server/src/
 
 | Test Type | Count | Status |
 |-----------|:-----:|:------:|
-| Unit tests | 1038 | ✅ Pass |
-| Integration (live nanoCAD) | 2 (+257 skipped) | ✅ Pass |
-| Types (mypy --strict) | 0 errors | ✅ Clean |
-| Linter (ruff) | 0 errors | ✅ Clean |
+| Automated tests | 1085 passed, 257 skipped | ✅ |
+| Native BIM objects in nanoCAD | wall, window, slab, roof, space | ✅ Verified |
 | Python code coverage | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 steps | ✅ |
 | MCP Resources | 4 + 1 template | ✅ |
@@ -247,3 +245,7 @@ MIT License — open source project.
 - [nanoCAD](https://nanocad.ru) and MultiCAD API team
 - [Model Context Protocol](https://modelcontextprotocol.io/) community
 - All contributors and testers
+
+## Native nBIM SDK 26 compatibility
+
+Native wall, library window, slab, roof and space tools are available in nanoCAD BIM Строительство 26. See the [SDK compatibility matrix](docs/SDK_COMPATIBILITY.md) for verified coverage and remaining sample groups.

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import logging
+import os
 from pathlib import Path
 from typing import Any
 
@@ -917,6 +918,10 @@ class CadRepository(ICadRepository):
         return self._http.move_solid(handle, dx, dy, dz)
 
     def set_3d_view(self, direction: str, render_mode: str = "wireframe") -> bool:
+        # The .NET view endpoint crashes nanoCAD BIM Строительство 26 on this host.
+        # Keep the CAD process safe until the host-side implementation is repaired.
+        if os.getenv("NANOCAD_MCP_DISABLE_VIEW") == "1":
+            raise NotSupportedError("3D view switching is disabled for BIM Строительство; use the nanoCAD UI")
         if self._mode != "full":
             msg = "3D view requires .NET engine"
             raise NotSupportedError(msg)

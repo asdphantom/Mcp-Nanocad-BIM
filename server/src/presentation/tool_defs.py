@@ -1,4 +1,4 @@
-"""Declarative definitions for all 207 MCP tools.
+"""Declarative definitions for all 218 MCP tools.
 
 Each tool is defined as a dict with name, description, properties, and required fields.
 Handlers are bound at runtime by _bind_handlers() after use case initialization.
@@ -70,9 +70,17 @@ _COM_TOOLS: set[str] = {
     # System
     "get_system_variable",
     "set_system_variable",
+    "get_construction_status",
+    "create_wall_solid",
+    "create_monolithic_slab",
+    "insert_construction_plan",
+    "set_construction_material",
+    "complete_window_opening",
+    "create_pitched_roof_panel",
+    "create_native_roof",
 }
 
-# All 207 tool definitions in order
+# All 218 tool definitions in order
 TOOL_DEFS: list[dict[str, Any]] = [
     # ── Health & System ───────────────────────────────────────
     {
@@ -1877,6 +1885,125 @@ TOOL_DEFS: list[dict[str, Any]] = [
         },
         "required": ["row_index", "rows_json"],
     },
+    # Native contour based entities from ncBIM SDK 26.
+    {
+        "name": "create_bim_slab",
+        "description": "Create a native BuildingSlab from an XY contour (mm)",
+        "properties": {
+            "points": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3},
+            "thickness": {"type": N}, "base_z": {"type": N},
+        },
+        "required": ["points", "thickness"],
+    },
+    {
+        "name": "create_bim_roof",
+        "description": "Create a native BuildingRoof from an XY contour with slope angle, overhang and thickness (mm, degrees)",
+        "properties": {
+            "points": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3},
+            "thickness": {"type": N}, "base_z": {"type": N},
+            "angle": {"type": N}, "overhang": {"type": N},
+        },
+        "required": ["points", "thickness"],
+    },
+    {
+        "name": "create_bim_space",
+        "description": "Create a native SpaceEntity from an XY contour and height (mm)",
+        "properties": {
+            "points": {"type": "array", "items": {"type": "array", "items": {"type": N}, "minItems": 2, "maxItems": 2}, "minItems": 3},
+            "height": {"type": N}, "name": S2, "number": S2,
+        },
+        "required": ["points", "height"],
+    },
+    # Native wall endpoint backed by the nBIM SDK in the .NET engine.
+    {
+        "name": "create_bim_wall",
+        "description": "Create a native linear nanoCAD BIM Строительство wall from two XY points, base elevation, height and thickness (mm); wall_type and level are reserved until mapped.",
+        "properties": {
+            "x1": {"type": N}, "y1": {"type": N},
+            "x2": {"type": N}, "y2": {"type": N},
+            "base_z": {"type": N}, "height": {"type": N},
+            "thickness": {"type": N}, "wall_type": S2, "level": S2,
+        },
+        "required": ["x1", "y1", "x2", "y2", "base_z", "height", "thickness"],
+    },
+    {
+        "name": "list_bim_windows",
+        "description": "List native window components available in the nanoCAD BIM object library",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "create_bim_window",
+        "description": "Insert a native library BuildingOpening into a native BIM wall and cut its opening (mm)",
+        "properties": {
+            "wall_handle": S2, "library_name": S2,
+            "position": {"type": N}, "sill_height": {"type": N},
+            "opening_depth": {"type": N},
+        },
+        "required": ["wall_handle", "library_name"],
+    },
+    # ── nanoCAD BIM Строительство: reliable DWG construction geometry ──
+    {
+        "name": "get_construction_status",
+        "description": "Inspect the running nanoCAD BIM Строительство host and active drawing",
+        "properties": {},
+        "required": [],
+    },
+    {
+        "name": "create_wall_solid",
+        "description": "Create an axis-aligned 3D wall solid in BIM Строительство (millimetres; not a parametric nBIM wall)",
+        "properties": {"x1": {"type": N}, "y1": {"type": N}, "x2": {"type": N},
+                       "y2": {"type": N}, "base_z": {"type": N}, "height": {"type": N},
+                       "layer": S2},
+        "required": ["x1", "y1", "x2", "y2", "base_z", "height"],
+    },
+    {
+        "name": "create_monolithic_slab",
+        "description": "Union rectangular slab areas into one 3D solid and subtract rectangular openings (millimetres)",
+        "properties": {"rectangles": {"type": "array", "items": {"type": "array"}},
+                       "base_z": {"type": N}, "thickness": {"type": N},
+                       "openings": {"type": "array", "items": {"type": "array"}},
+                       "layer": S2},
+        "required": ["rectangles", "base_z", "thickness"],
+    },
+    {
+        "name": "insert_construction_plan",
+        "description": "Insert an existing DWG plan as a block reference at a floor elevation in BIM Строительство",
+        "properties": {"path": S2, "z": {"type": N}, "layer": S2},
+        "required": ["path", "z"],
+    },
+    {
+        "name": "set_construction_material",
+        "description": "Assign a named DWG material (such as Brick) to a 3D construction solid",
+        "properties": {"handle": S2, "material": S2},
+        "required": ["handle"],
+    },
+    {
+        "name": "complete_window_opening",
+        "description": "Add brick sill and lintel solids to an existing full-height wall gap, leaving a clear window opening (millimetres)",
+        "properties": {"x1": {"type": N}, "y1": {"type": N}, "x2": {"type": N},
+                       "y2": {"type": N}, "base_z": {"type": N},
+                       "wall_height": {"type": N}, "sill_height": {"type": N},
+                       "window_height": {"type": N}, "layer": S2, "material": S2},
+        "required": ["x1", "y1", "x2", "y2", "base_z", "wall_height"],
+    },
+    {
+        "name": "create_pitched_roof_panel",
+        "description": "Create a sloped 3D roof sheet from two X-edge elevations, e.g. profiled steel roofing (millimetres)",
+        "properties": {"x1": {"type": N}, "x2": {"type": N},
+                       "y1": {"type": N}, "y2": {"type": N},
+                       "z1": {"type": N}, "z2": {"type": N},
+                       "thickness": {"type": N}, "layer": S2, "material": S2},
+        "required": ["x1", "x2", "y1", "y2", "z1", "z2"],
+    },
+    {
+        "name": "create_native_roof",
+        "description": "Create one editable ncBuildingRoof with BIM Строительство Roof command from ordered [x,y] outline (millimetres). Covering assembly is set separately in BIM.",
+        "properties": {"outline": {"type": "array", "items": {"type": "array", "items": {"type": N}}},
+                       "bottom_level": {"type": N}, "angle": {"type": N},
+                       "overhang": {"type": N}, "thickness": {"type": N}, "layer": S2},
+        "required": ["outline", "bottom_level"],
+    },
     # ── History / Model Regeneration (server-side, no CAD needed) ──
     {
         "name": "record_tool_call",
@@ -1940,7 +2067,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 207, f"Expected 207 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 221, f"Expected 221 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

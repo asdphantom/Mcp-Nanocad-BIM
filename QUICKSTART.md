@@ -5,7 +5,7 @@
 ## 1. Установка Python-пакета
 
 ```powershell
-git clone https://github.com/nanoCAD/nanoCAD-MCP.git
+git clone https://github.com/Evans-Sense/nanoCAD-MCP.git
 cd nanoCAD-MCP\server
 pip install -e .
 pip install -e ".[sse]"    # опционально: для удалённого доступа

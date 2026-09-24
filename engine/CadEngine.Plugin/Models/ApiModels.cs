@@ -46,6 +46,40 @@ namespace CadEngine
         public List<FontInfoResponse> Fonts { get; set; } = new();
     }
 
+    // Contract for a native BIM wall. Requires the separate nBIM SDK.
+    public class BimWindowRequest
+    {
+        public string WallHandle { get; set; } = "";
+        public string LibraryName { get; set; } = "";
+        public double? Position { get; set; }
+        public double SillHeight { get; set; } = 700;
+        public double OpeningDepth { get; set; } = 120;
+    }
+    public class BimContourRequest
+    {
+        public string Kind { get; set; } = "";
+        public double[][] Points { get; set; } = Array.Empty<double[]>();
+        public double BaseZ { get; set; }
+        public double Height { get; set; }
+        public double Thickness { get; set; }
+        public double Angle { get; set; } = 45;
+        public double Overhang { get; set; } = 150;
+        public string? Name { get; set; }
+        public string? Number { get; set; }
+    }
+
+    public class BimWallRequest
+    {
+        public double X1 { get; set; }
+        public double Y1 { get; set; }
+        public double X2 { get; set; }
+        public double Y2 { get; set; }
+        public double BaseZ { get; set; }
+        public double Height { get; set; }
+        public double Thickness { get; set; }
+        public string? WallType { get; set; }
+        public string? Level { get; set; }
+    }
     public class CommandRequest
     {
         [JsonPropertyName("command")]

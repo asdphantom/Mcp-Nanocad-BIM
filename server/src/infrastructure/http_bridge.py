@@ -185,6 +185,20 @@ class HttpCadBridge:
     def check_health(self) -> dict[str, Any] | None:
         return self._request("GET", "/api/system/health", timeout=HEALTH_CHECK_TIMEOUT)
 
+    def list_bim_windows(self) -> dict[str, Any] | None:
+        """List native window components in the BIM object library."""
+        return self._request("GET", "/api/bim/windows")
+
+    def create_bim_window(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Place a library window into an existing native BIM wall."""
+        return self._request("POST", "/api/bim/window", json_body=payload)
+    def create_bim_contour(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Create native BIM slab, roof or space from an XY contour."""
+        return self._request("POST", "/api/bim/contour", json_body=payload)
+
+    def create_bim_wall(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        """Request a native wall from the in-process BIM adapter."""
+        return self._request("POST", "/api/bim/wall", json_body=payload)
     # ── Entity operations ──────────────────────────────────────
 
     def create_entity(self, entity_type: str, params: dict[str, Any]) -> str | None:

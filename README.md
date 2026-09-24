@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1085%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1088%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 221 инструмент для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 222 инструмента для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (221 инструмент)
+Python MCP Server (222 инструмента)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,8 +52,8 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| BIM Строительство | 13 | DWG-конструкции и нативные стены, окна, перекрытия, крыши, помещения |
-| **ИТОГО** | **221** | |
+| BIM Строительство | 14 | DWG-конструкции и нативные стены, окна, перекрытия, крыши, помещения |
+| **ИТОГО** | **222** | |
 
 
 ## nanoCAD BIM Строительство
@@ -187,7 +187,7 @@ py -m mypy server/src/
 
 | Вид тестов | Количество | Статус |
 |-----------|:----------:|:------:|
-| Автоматические тесты | 1085 passed, 257 skipped | ✅ |
+| Автоматические тесты | 1088 passed, 257 skipped | ✅ |
 | Нативные BIM объекты в nanoCAD | стена, окно, перекрытие, крыша, помещение | ✅ Проверено |
 | Покрытие Python-кода | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 шага | ✅ |
@@ -201,7 +201,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 221 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 222 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -219,7 +219,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 221 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 222 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
@@ -284,7 +284,8 @@ SDK .NET 8 (для сборки проекта net6.0-windows) и nBIM SDK 26. �
 {"name":"create_bim_wall","arguments":{"x1":0,"y1":0,"x2":6000,"y2":0,"base_z":0,"height":3300,"thickness":300}}
 ```
 
-`list_bim_windows` получает объекты библиотеки, а `create_bim_window` вставляет
+`search_bim_library` ищет объекты в шести категориях SDK,
+`list_bim_windows` получает оконные объекты библиотеки, а `create_bim_window` вставляет
 нативный `BuildingOpening` в указанную стену и связывает проём со стеной.
 `create_bim_slab`, `create_bim_roof` и `create_bim_space` создают нативные
 контурные объекты SDK по массиву точек `[[x,y], ...]`. Все размеры в миллиметрах;

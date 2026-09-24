@@ -185,6 +185,17 @@ class HttpCadBridge:
     def check_health(self) -> dict[str, Any] | None:
         return self._request("GET", "/api/system/health", timeout=HEALTH_CHECK_TIMEOUT)
 
+    def search_bim_library(
+        self, category: str, name: str | None = None, limit: int = 50
+    ) -> dict[str, Any] | None:
+        """Search a known ncBIM SDK object-library category."""
+        from urllib.parse import urlencode
+
+        query = {"category": category, "limit": limit}
+        if name:
+            query["name"] = name
+        return self._request("GET", f"/api/bim/library?{urlencode(query)}")
+
     def list_bim_windows(self) -> dict[str, Any] | None:
         """List native window components in the BIM object library."""
         return self._request("GET", "/api/bim/windows")

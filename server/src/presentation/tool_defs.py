@@ -1885,6 +1885,15 @@ TOOL_DEFS: list[dict[str, Any]] = [
         },
         "required": ["row_index", "rows_json"],
     },
+    {
+        "name": "search_bim_library",
+        "description": "Search the native nBIM SDK object library by category and optional name filter",
+        "properties": {
+            "category": {"type": "string", "enum": ["opening", "metalware", "metalware_node", "concrete_profile", "reinforcement", "structural_surface"]},
+            "name": S2, "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+        },
+        "required": ["category"],
+    },
     # Native contour based entities from ncBIM SDK 26.
     {
         "name": "create_bim_slab",
@@ -2067,7 +2076,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 221, f"Expected 221 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 222, f"Expected 222 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

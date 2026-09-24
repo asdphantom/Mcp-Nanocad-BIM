@@ -10,6 +10,7 @@ API, not a complete list of every public type in `ncBIMSmgd.dll`.
 | MCP tool | SDK factory or API | Verified in running nanoCAD |
 |---|---|---|
 | `create_bim_wall` | `LinearBuildingWallFactory.Create` | Yes, `LinearBuildingWall` |
+| `search_bim_library` | `LibraryRequest` for six SDK categories | Yes, openings, metalware and concrete profiles |
 | `list_bim_windows` | `LibraryRequest` / `BuildingOpeningCategory` | Yes, 52 library entries |
 | `create_bim_window` | `BuildingOpeningFactory.Create`, `ConnectToSurface` | Yes, opening E67 in wall E55 |
 | `create_bim_slab` | `BuildingSlabFactory.Create` | Yes, `BuildingSlab` |
@@ -58,7 +59,9 @@ need multiple MCP tools or may be interactive and require redesign for automatio
   are verified. Space creation currently uses elevation zero.
 - The roof tool implements the standard contour roof factory; dome, loft,
   sweep and slope roof factories are still pending.
-- The window catalog currently filters names containing `Окно`. The insertion
+- The generic library search supports six known SDK categories and a name
+  filter, returning at most 100 matches. The window catalog filters names
+  containing `Окно`. The insertion
   tool requires an exact name from that catalog and a native wall handle.
 - Builds require the SDK's `ncBIMSmgd.dll` at `work/ncBIM_SDK_26/include-x64`
   or a caller-provided `NCadBIMSDK` path. The installed nanoCAD libraries are

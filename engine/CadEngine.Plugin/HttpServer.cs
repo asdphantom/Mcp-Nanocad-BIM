@@ -196,6 +196,15 @@ namespace CadEngine
                 return req != null ? _systemService.SetVariable(varSetName!, req.Value) : BadRequest();
             }
 
+            if (method == "GET" && path == "/api/bim/library")
+            {
+                var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");
+                var category = query["category"] ?? "";
+                var name = query["name"];
+                var limit = int.TryParse(query["limit"], out var value) ? value : 50;
+                return BimLibraryService.Search(category, name, limit);
+            }
+
             if (method == "GET" && path == "/api/bim/windows")
                 return BimWindowService.ListWindows();
 

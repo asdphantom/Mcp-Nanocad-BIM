@@ -148,6 +148,7 @@ _TOOL_HANDLER_MAP: dict[str, tuple[str, str]] = {
     "get_construction_status": ("construction", "get_construction_status"),
     "create_bim_wall": ("bim_wall", "create_bim_wall"),
     "list_bim_windows": ("bim_window", "list_bim_windows"),
+    "search_bim_library": ("bim_library", "search_bim_library"),
     "create_bim_window": ("bim_window", "create_bim_window"),
     "create_bim_slab": ("bim_contour", "create_bim_slab"),
     "create_bim_roof": ("bim_contour", "create_bim_roof"),

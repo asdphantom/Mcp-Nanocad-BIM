@@ -9,6 +9,7 @@ from __future__ import annotations
 from typing import TYPE_CHECKING, Any
 
 from src.application.bim_contour_use_case import BimContourUseCase
+from src.application.bim_library_use_case import BimLibraryUseCase
 from src.application.bim_wall_use_case import BimWallUseCase
 from src.application.bim_window_use_case import BimWindowUseCase
 from src.application.construction_use_case import ConstructionUseCase
@@ -191,6 +192,10 @@ class UseCaseFactory:
     @property
     def multicad(self) -> MultiCadUseCase:
         return self._get("multicad", lambda: MultiCadUseCase(self._http))
+
+    @property
+    def bim_library(self) -> BimLibraryUseCase:
+        return self._get("bim_library", lambda: BimLibraryUseCase(self._http))
 
     @property
     def bim_contour(self) -> BimContourUseCase:

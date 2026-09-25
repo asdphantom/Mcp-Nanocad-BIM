@@ -47,7 +47,7 @@ class NanoCadComBridge:
     def connect(self) -> bool:
         """Connect to a running nanoCAD instance.
 
-        Tries GetObject first (running instance), then Dispatch (create new).
+        Attaches only to an already running instance.
         """
         if not win32com_client_available:
             logger.error("pywin32 not available, cannot connect via COM")
@@ -57,13 +57,8 @@ class NanoCadComBridge:
             self._app = win32com.client.GetObject(None, CAD_PROG_ID)
             logger.info("Connected to running nanoCAD instance via GetObject")
         except pywintypes.com_error:
-            try:
-                self._app = win32com.client.Dispatch(CAD_PROG_ID)
-                self._app.Visible = True
-                logger.info("Started new nanoCAD instance via Dispatch")
-            except pywintypes.com_error as e:
-                logger.exception("Cannot connect or start nanoCAD: %s", e)
-                return False
+            logger.info("nanoCAD is not running; COM bridge remains disconnected")
+            return False
 
         try:
             self._doc = self._app.ActiveDocument

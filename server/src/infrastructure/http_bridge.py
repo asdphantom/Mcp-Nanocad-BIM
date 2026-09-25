@@ -5,6 +5,7 @@ import logging
 import os
 from pathlib import Path
 from typing import Any
+from urllib.parse import urlencode
 
 import httpx
 import psutil
@@ -984,8 +985,16 @@ class HttpCadBridge:
     def get_entity_info(self, handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/entity/{handle}/info")
 
-    def get_all_entities(self) -> dict[str, Any] | None:
-        return self._request("GET", "/api/measurement/entities")
+    def get_all_entities(
+        self, limit: int = 25, offset: int = 0,
+        entity_type: str | None = None, layer: str | None = None,
+    ) -> dict[str, Any] | None:
+        query: dict[str, str | int] = {"limit": limit, "offset": offset}
+        if entity_type:
+            query["entity_type"] = entity_type
+        if layer:
+            query["layer"] = layer
+        return self._request("GET", f"/api/measurement/entities?{urlencode(query)}")
 
     # -- Mirror entity --
 

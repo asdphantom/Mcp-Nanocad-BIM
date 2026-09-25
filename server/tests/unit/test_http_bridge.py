@@ -795,6 +795,7 @@ class TestMeasurementOps:
         )
         result = bridge.get_all_entities()
         assert result == {"entities": [{"handle": "H1"}]}
+        assert "/api/measurement/entities?limit=25&offset=0" in str(bridge._client.request.call_args)
 
 
 # ── Transformation operations ────────────────────────────────

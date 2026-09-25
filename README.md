@@ -4,7 +4,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 [![Tests](https://img.shields.io/badge/tests-1093%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 225 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 226 инструментов для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (225 инструментов)
+Python MCP Server (226 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -53,7 +53,7 @@ nanoCAD — чертёж
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
 | BIM Строительство | 17 | DWG-конструкции и нативные стены, окна, перекрытия, крыши, помещения |
-| **ИТОГО** | **225** | |
+| **ИТОГО** | **226** | |
 
 
 ## nanoCAD BIM Строительство
@@ -107,13 +107,19 @@ C:\full\path\to\nanoCAD-MCP\engine\dist\CadEngine.Plugin.dll
 ### 4. Запуск
 
 ```powershell
-# Терминал 1: Запустите nanoCAD 26 (с загруженным плагином)
+# Терминал 1: Явно запустите BIM Строительство 26 (профиль СПДС 26)
+./scripts/start_nanocad.ps1
 
 # Терминал 2: Запустите MCP-сервер
 cd server
 py -m src.presentation.server
 ```
 
+MCP-сервер сам не запускает nanoCAD при подключении клиента. Если nanoCAD закрыт,
+запустите BIM Строительство командой выше или вызовите MCP-инструмент `start_nanocad`.
+`get_all_entities` возвращает компактный список (25 объектов за страницу):
+`limit`, `offset`, `entity_type` и `layer` позволяют читать нужную часть модели.
+Для полных свойств одного объекта используйте `get_entity_detail(handle)`.
 ### 5. Подключение клиента
 
 **opencode** (`opencode.json`):
@@ -201,7 +207,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 225 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 226 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -219,7 +225,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 225 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 226 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |

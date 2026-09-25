@@ -431,6 +431,28 @@ def _build_routing() -> dict[str, Callable[..., Any]]:
 
         return await history_uc.replay_history(_dispatcher)
 
+    def _start_nanocad(**kwargs: Any) -> dict[str, Any]:
+        import subprocess
+
+        import psutil
+
+        exe = Path(os.environ.get(
+            "NANOCAD_BIM_EXE",
+            r"C:\Program Files\Nanosoft\nanoCAD BIM Строительство x64 26.0\BIMSP.exe",
+        ))
+        if not exe.is_file():
+            raise FileNotFoundError(f"nanoCAD BIM Строительство not found: {exe}")
+        for proc in psutil.process_iter(["name"]):
+            if (proc.info["name"] or "").lower() == "bimsp.exe":
+                return {"status": "already_running", "pid": proc.pid}
+        proc = subprocess.Popen(
+            [str(exe)], cwd=str(exe.parent),
+            stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+        return {"status": "started", "pid": proc.pid}
+
+    routing["start_nanocad"] = _start_nanocad
     routing["replay_history"] = _replay_handler
 
     _routing_cache = routing
@@ -541,17 +563,9 @@ def create_server() -> Server:
 
     @server.list_tools()
     async def handle_list_tools() -> list[Tool]:
-        try:
-            _ensure_connected()
-        except Exception:
-            log.debug("list_tools: connection attempt failed, falling back to offline")
-        try:
-            repo = get_repository()
-            mode = repo.connection_mode
-        except Exception:
-            mode = "offline"
-        return _get_tools(mode)
-
+        # Keep the catalog stable when nanoCAD is opened after the MCP client.
+        # Connection is attempted only when a tool or resource is requested.
+        return _get_tools("full")
     @server.list_prompts()
     async def handle_list_prompts() -> list[Prompt]:
         return [
@@ -691,7 +705,8 @@ def create_server() -> Server:
         log.info("Tool call", tool=name, args=args)
 
         try:
-            _ensure_connected()
+            if name != "start_nanocad":
+                _ensure_connected()
         except Exception:
             log.exception("Failed to connect to CAD")
             from src.presentation.context import reset as _reset_context

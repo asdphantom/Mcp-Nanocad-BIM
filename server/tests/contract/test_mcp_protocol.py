@@ -144,34 +144,24 @@ class TestListTools:
             "Full mode should include create_box"
         )
 
-    async def test_list_tools_com_mode_filters_solid_tools(
+    async def test_list_tools_stays_available_in_com_mode(
         self, com_repo: MagicMock
     ) -> None:
-        """COM mode filters out full-mode-only tools."""
         server = await _create_server(com_repo)
         result = await self._list_tools(server)
         tool_names = [t.name for t in result.tools]
-        # COM mode should NOT have full-mode tools like create_box
-        assert "create_box" not in tool_names, (
-            "COM mode should exclude 3D solid tools"
-        )
-        # But SHOULD have online tools
         assert "health_check" in tool_names
-        assert "create_line" in tool_names
+        assert "create_box" in tool_names
 
-    async def test_list_tools_offline_mode_has_minimal_tools(
+    async def test_list_tools_stays_available_offline(
         self, offline_repo: MagicMock
     ) -> None:
-        """Offline mode returns only tools that need no CAD."""
         server = await _create_server(offline_repo)
         result = await self._list_tools(server)
         tool_names = [t.name for t in result.tools]
-        # Offline should have health_check but not entity creation
         assert "health_check" in tool_names
-        assert "create_line" not in tool_names, (
-            "Offline mode should exclude entity creation tools"
-        )
-
+        assert "create_line" in tool_names
+        offline_repo.connect.assert_not_called()
     async def test_all_tools_have_unique_names(
         self, mock_repo: MagicMock
     ) -> None:

@@ -23,6 +23,7 @@ S2: dict[str, str] = {"type": S}
 #   requires_mode="full" — requires .NET engine (HTTP bridge, default)
 _OFFLINE_TOOLS: set[str] = {
     "health_check",
+    "start_nanocad",
     "get_system_info",
     # Parametric design tools (server-side only, no CAD needed)
     "set_parameter",
@@ -80,7 +81,7 @@ _COM_TOOLS: set[str] = {
     "create_native_roof",
 }
 
-# All 218 tool definitions in order
+# All 226 tool definitions in order
 TOOL_DEFS: list[dict[str, Any]] = [
     # ── Health & System ───────────────────────────────────────
     {
@@ -90,6 +91,11 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "required": [],
     },
     {
+        "name": "start_nanocad",
+        "description": "Explicitly start nanoCAD BIM Строительство 26.0 (СПДС 26.0)",
+        "properties": {},
+        "required": [],
+    },    {
         "name": "get_system_info",
         "description": "Get nanoCAD version and system info",
         "properties": {},
@@ -1081,8 +1087,13 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
     {
         "name": "get_all_entities",
-        "description": "List all entities in model space",
-        "properties": {},
+        "description": "List compact model-space entities, 25 per page; filter by type/layer; use get_entity_detail for full data",
+        "properties": {
+            "limit": {"type": "integer", "minimum": 1, "maximum": 100},
+            "offset": {"type": "integer", "minimum": 0},
+            "entity_type": S2,
+            "layer": S2,
+        },
         "required": [],
     },
     {
@@ -2094,7 +2105,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 225, f"Expected 225 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 226, f"Expected 226 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

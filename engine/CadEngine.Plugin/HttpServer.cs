@@ -648,7 +648,12 @@ namespace CadEngine
             if (method == "GET" && TryMatch(path, "/api/entity/{handle}/info", out var infoHandle))
             { return _measurementService.GetEntityInfo(infoHandle!); }
             if (method == "GET" && path == "/api/measurement/entities")
-             { return _measurementService.GetAllEntities(); }
+            {
+                var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");
+                var limit = int.TryParse(query["limit"], out var parsedLimit) ? parsedLimit : 25;
+                var offset = int.TryParse(query["offset"], out var parsedOffset) ? parsedOffset : 0;
+                return _measurementService.GetAllEntities(limit, offset, query["entity_type"], query["layer"]);
+            }
 
             // === SELECTION / QSELECT ===
             if (method == "POST" && path == "/api/selection/select")

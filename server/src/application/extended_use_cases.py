@@ -320,7 +320,12 @@ class MeasurementUseCase:
 
     def get_all_entities(self, **kwargs: Any) -> Any:
         self._require_http()
-        return self._http.get_all_entities()  # type: ignore[union-attr]
+        return self._http.get_all_entities(  # type: ignore[union-attr]
+            limit=kwargs.get("limit", 25),
+            offset=kwargs.get("offset", 0),
+            entity_type=kwargs.get("entity_type"),
+            layer=kwargs.get("layer"),
+        )
 
 
 class TransformationUseCase:

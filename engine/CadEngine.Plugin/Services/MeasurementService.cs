@@ -103,35 +103,52 @@ namespace CadEngine.Services
             }
         }
 
-        public object GetAllEntities()
+        public object GetAllEntities(int limit = 25, int offset = 0, string? entityType = null, string? layer = null)
         {
             try
             {
+                limit = Math.Clamp(limit, 1, 100);
+                offset = Math.Max(offset, 0);
                 using var tr = Db.TransactionManager.StartTransaction();
                 var btr = (BlockTableRecord)tr.GetObject(Db.CurrentSpaceId, OpenMode.ForRead);
 
                 var entities = new List<object>();
+                var count = 0;
                 foreach (var id in btr)
                 {
                     var obj = tr.GetObject(id, OpenMode.ForRead);
-                    if (obj is Entity ent)
+                    if (obj is not Entity ent) continue;
+                    var type = ent.GetType().Name;
+                    if (!string.IsNullOrWhiteSpace(entityType) &&
+                        !string.Equals(type, entityType, StringComparison.OrdinalIgnoreCase)) continue;
+                    if (!string.IsNullOrWhiteSpace(layer) &&
+                        !string.Equals(ent.Layer, layer, StringComparison.OrdinalIgnoreCase)) continue;
+
+                    if (count >= offset && entities.Count < limit)
                     {
                         entities.Add(new
                         {
                             handle = ent.Handle.Value.ToString("X"),
-                            type = ent.GetType().Name,
+                            type,
                             layer = ent.Layer
                         });
                     }
+                    count++;
                 }
-                return new { count = entities.Count, entities };
+                var nextOffset = offset + entities.Count;
+                return new
+                {
+                    count,
+                    returned = entities.Count,
+                    next_offset = nextOffset < count ? (int?)nextOffset : null,
+                    entities
+                };
             }
             catch (Exception ex)
             {
                 return new ErrorResponse { Error = ex.Message };
             }
         }
-
         public object GetAngle(AngleRequest req)
         {
             try

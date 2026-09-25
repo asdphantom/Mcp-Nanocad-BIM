@@ -184,7 +184,7 @@ class TestGetTools:
     def test_returns_correct_tool_count(self) -> None:
         """Verify we have the expected number of tool definitions."""
         tools = srv._get_tools()
-        assert len(tools) == 225, f"Expected 225 tools, got {len(tools)}"
+        assert len(tools) == 226, f"Expected 226 tools, got {len(tools)}"
 
     def test_first_tool_is_health_check(self) -> None:
         tools = srv._get_tools()
@@ -400,15 +400,15 @@ def _setup_mock_context(
 
 class TestBuildRouting:
     def test_returns_replay_only_when_context_is_not_set(self) -> None:
-        """Only server-side tools (replay_history) available without context."""
+        """Server-side tools remain available without CAD context."""
         reset_context()
         srv._routing_cache = None
         with patch.object(srv, "get_factory", return_value=None):
             routing = srv._build_routing()
         assert isinstance(routing, dict)
         assert "replay_history" in routing
-        # All other tools require a factory
-        assert len(routing) == 1
+        assert "start_nanocad" in routing
+        assert len(routing) == 2
 
     def test_returns_dict_with_all_tool_names(self) -> None:
         _setup_mock_context()

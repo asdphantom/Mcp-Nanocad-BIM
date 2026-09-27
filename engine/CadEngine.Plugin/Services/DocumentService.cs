@@ -264,6 +264,9 @@ namespace CadEngine
                     string tpl = !string.IsNullOrEmpty(template) ? template : "acadiso.dwt";
                     var doc = dm.Add(tpl);
                     dm.MdiActiveDocument = doc;
+                    // Refresh on the UI thread: MdiActiveDocument may be null on
+                    // the HTTP worker thread, leaving Save() bound to the old DWG.
+                    CadContext.RefreshDocument();
                     return (object?)new { success = true };
                 }
                 catch (Exception ex)
@@ -273,9 +276,6 @@ namespace CadEngine
                     return (object?)new { success = false, error = $"New document failed: {ex.Message}" };
                 }
             });
-
-            // Refresh CadContext after document was created on main thread
-            CadContext.RefreshDocument();
 
             // If savePath provided, save the new document to that path.
             if (!string.IsNullOrEmpty(savePath))

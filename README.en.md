@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1093%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1105%20passed-green.svg)]()
 
-**MCP server for nanoCAD 26 automation** — 207 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
+**MCP server for nanoCAD 26 automation** — 230 tools for 2D/3D drafting, engineering symbols, dimensions, sheet metal, assemblies, IFC, NURBS and MultiCAD API.
 
 Works via [Model Context Protocol (MCP)](https://modelcontextprotocol.io/) with any MCP client: opencode, Claude Desktop, Cursor, and more.
 
@@ -13,7 +13,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (207 tools)
+Python MCP Server (230 tools)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -50,7 +50,8 @@ nanoCAD — drawing
 | NURBS / IFC | 5 | NURBS curves, surfaces, IFC import/export |
 | MultiCAD API | 12 | grid axes, rooms, parametric objects, reactors |
 | Other | 12 | mesh, selection, trim, extend, offset, viewport, render |
-| **TOTAL** | **207** | |
+| BIM Construction | 21 | DWG construction, native architecture and concrete members, associations |
+| **TOTAL** | **230** | |
 
 ## 🚀 Quick Start
 
@@ -168,7 +169,7 @@ py -m mypy server/src/
 
 | Test Type | Count | Status |
 |-----------|:-----:|:------:|
-| Automated tests | 1093 passed, 257 skipped | ✅ |
+| Automated tests | 1105 passed, 257 skipped | ✅ |
 | Native BIM objects in nanoCAD | wall, window, slab, roof, space | ✅ Verified |
 | Python code coverage | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 steps | ✅ |
@@ -182,7 +183,7 @@ server/src/
 ├── domain/              # Entities, Value Objects, ports (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, business logic
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP server (stdio/SSE), 207 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP server (stdio/SSE), 230 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# services (EntityService, SolidService, SymbolService ...)
@@ -198,7 +199,7 @@ engine/CadEngine.Plugin/
 
 | Feature | Status | Description |
 |---------|:------:|-------------|
-| Tools | ✅ 207 | Full 2D/3D/engineering tool set |
+| Tools | ✅ 230 | Full 2D/3D/engineering tool set |
 | Resources | ✅ 4 + 1 template | Read document, layers, system, parameters, entities |
 | Prompts | ✅ 2 stubs | `create-part` and `parametric-design` for guided workflows |
 | isError | ✅ | All error paths return `CallToolResult(isError=True)` |
@@ -214,6 +215,9 @@ engine/CadEngine.Plugin/
 
 > 💡 **Pre-built plugin** is available at `engine/dist/CadEngine.Plugin.dll`.
 > No .NET SDK required — just point nCad.ini to this DLL.
+
+The pre-built DLL includes the new association and concrete member tools. They
+compile, pass automated tests and were verified in nanoCAD BIM Строительство 26.
 
 ## 🛠 Development
 
@@ -249,3 +253,5 @@ MIT License — open source project.
 ## Native nBIM SDK 26 compatibility
 
 Native wall, library window, slab, standard/dome/loft/sweep roof, space and category search tools are available in nanoCAD BIM Строительство 26. See the [SDK compatibility matrix](docs/SDK_COMPATIBILITY.md) for verified coverage and remaining sample groups.
+
+Native object associations and concrete beam/column creation have been verified in nanoCAD BIM Строительство 26, including persistence after reopening the DWG. See the [progress map](docs/PROGRESS_MAP.md) for the next checks.

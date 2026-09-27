@@ -228,6 +228,18 @@ namespace CadEngine
                 var req = ParseBody<BimWallRequest>(request);
                 return req != null ? BimWallService.Create(req) : BadRequest();
             }
+            if (method == "POST" && path == "/api/bim/association")
+            {
+                var req = ParseBody<BimAssociationRequest>(request);
+                return req != null ? BimAssociationService.Create(req) : BadRequest();
+            }
+            if (method == "GET" && TryMatch(path, "/api/bim/association/{handle}", out var associationHandle))
+                return BimAssociationService.List(associationHandle!);
+            if (method == "POST" && path == "/api/bim/concrete-member")
+            {
+                var req = ParseBody<BimConcreteMemberRequest>(request);
+                return req != null ? BimConcreteMemberService.Create(req) : BadRequest();
+            }
             // Document
             if (method == "GET" && path == "/api/document")
                 return _documentService.GetInfo();

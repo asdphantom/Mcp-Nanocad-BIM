@@ -81,7 +81,7 @@ _COM_TOOLS: set[str] = {
     "create_native_roof",
 }
 
-# All 226 tool definitions in order
+# All 230 tool definitions in order
 TOOL_DEFS: list[dict[str, Any]] = [
     # ── Health & System ───────────────────────────────────────
     {
@@ -1965,6 +1965,30 @@ TOOL_DEFS: list[dict[str, Any]] = [
         "required": ["x1", "y1", "x2", "y2", "base_z", "height", "thickness"],
     },
     {
+        "name": "create_bim_association",
+        "description": "Create a native nBIM master/slave association between two existing drawing entities by hexadecimal handles",
+        "properties": {"master_handle": S2, "slave_handle": S2},
+        "required": ["master_handle", "slave_handle"],
+    },
+    {
+        "name": "get_bim_associations",
+        "description": "List native nBIM master and slave association records for one drawing entity",
+        "properties": {"entity_handle": S2},
+        "required": ["entity_handle"],
+    },
+    {
+        "name": "create_bim_concrete_beam",
+        "description": "Create a native ConcreteBeam from an exact concrete_profile library name and two XYZ axis points (mm)",
+        "properties": {"profile_name": S2, "x1": {"type": N}, "y1": {"type": N}, "z1": {"type": N}, "x2": {"type": N}, "y2": {"type": N}, "z2": {"type": N}},
+        "required": ["profile_name", "x1", "y1", "z1", "x2", "y2", "z2"],
+    },
+    {
+        "name": "create_bim_concrete_column",
+        "description": "Create a native vertical ConcreteColumn from an exact concrete_profile library name and two XYZ axis points (mm)",
+        "properties": {"profile_name": S2, "x1": {"type": N}, "y1": {"type": N}, "z1": {"type": N}, "x2": {"type": N}, "y2": {"type": N}, "z2": {"type": N}},
+        "required": ["profile_name", "x1", "y1", "z1", "x2", "y2", "z2"],
+    },
+    {
         "name": "list_bim_windows",
         "description": "List native window components available in the nanoCAD BIM object library",
         "properties": {},
@@ -2105,7 +2129,7 @@ TOOL_DEFS: list[dict[str, Any]] = [
 ]
 
 # Verify count
-assert len(TOOL_DEFS) == 226, f"Expected 226 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 230, f"Expected 230 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

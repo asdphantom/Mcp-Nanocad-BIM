@@ -19,6 +19,9 @@ API, not a complete list of every public type in `ncBIMSmgd.dll`.
 | `create_bim_loft_roof` | `BuildingRoofLoftFactory.Create` | Yes, `BuildingRoofLoft` |
 | `create_bim_sweep_roof` | `BuildingRoofSweepFactory.Create` | Yes, `BuildingRoofSweep` |
 | `create_bim_space` | `SpaceEntityFactory.Create` | Yes, `SpaceEntity` |
+| `create_bim_association`, `get_bim_associations` | `AssociationUtilities.CreateAssociation`, `GetMasterAssociation`, `GetSlaveAssociations` | Yes, `ObjectAssociation` E55 linking walls E51 and E53; survived DWG reopen |
+| `create_bim_concrete_beam` | `ConcreteBeamFactory.Create`, `SetLocation` | Yes, `ConcreteBeam` E56; survived DWG reopen |
+| `create_bim_concrete_column` | `ConcreteColumnFactory.Create`, `SetLocation` | Yes, `ConcreteColumn` E5C; survived DWG reopen |
 
 The older `create_wall_solid`, `create_monolithic_slab`, `complete_window_opening`
 and similar construction helpers make DWG geometry. They are separate from the
@@ -46,8 +49,8 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 | Common | ProjectManager | 3 | Pending |
 | Common | ncBIMSmgd_sample | 1 | Pending |
 | Structure | AssemblyUI | 4 | Pending |
-| Structure | AssociationUI | 3 | Pending |
-| Structure | ConcreteUI | 7 | Pending |
+| Structure | AssociationUI | 3 | Create and inspect verified; removal pending |
+| Structure | ConcreteUI | 7 | Beam and column create verified; other commands pending |
 | Structure | MetalUI | 12 | Pending |
 | Structure | ReinforcementUI | 7 | Pending |
 | ParametricKit | EntityReloadServer | 2 | Pending |

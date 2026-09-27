@@ -90,6 +90,22 @@ namespace CadEngine
         public string? WallType { get; set; }
         public string? Level { get; set; }
     }
+    public class BimAssociationRequest
+    {
+        public string MasterHandle { get; set; } = "";
+        public string SlaveHandle { get; set; } = "";
+    }
+    public class BimConcreteMemberRequest
+    {
+        public string Kind { get; set; } = "";
+        public string ProfileName { get; set; } = "";
+        public double X1 { get; set; }
+        public double Y1 { get; set; }
+        public double Z1 { get; set; }
+        public double X2 { get; set; }
+        public double Y2 { get; set; }
+        public double Z2 { get; set; }
+    }
     public class CommandRequest
     {
         [JsonPropertyName("command")]

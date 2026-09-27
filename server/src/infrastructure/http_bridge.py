@@ -215,6 +215,15 @@ class HttpCadBridge:
     def create_bim_wall(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         """Request a native wall from the in-process BIM adapter."""
         return self._request("POST", "/api/bim/wall", json_body=payload)
+
+    def create_bim_association(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        return self._request("POST", "/api/bim/association", json_body=payload)
+
+    def get_bim_associations(self, entity_handle: str) -> dict[str, Any] | None:
+        return self._request("GET", f"/api/bim/association/{entity_handle}")
+
+    def create_bim_concrete_member(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        return self._request("POST", "/api/bim/concrete-member", json_body=payload)
     # ── Entity operations ──────────────────────────────────────
 
     def create_entity(self, entity_type: str, params: dict[str, Any]) -> str | None:

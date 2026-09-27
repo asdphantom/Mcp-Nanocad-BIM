@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1093%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1105%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 226 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 230 инструментов для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (226 инструментов)
+Python MCP Server (230 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,8 +52,8 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| BIM Строительство | 17 | DWG-конструкции и нативные стены, окна, перекрытия, крыши, помещения |
-| **ИТОГО** | **226** | |
+| BIM Строительство | 21 | DWG-конструкции, нативные архитектурные и бетонные элементы, ассоциации |
+| **ИТОГО** | **230** | |
 
 
 ## nanoCAD BIM Строительство
@@ -90,6 +90,9 @@ pip install -e ".[sse,dev]"   # для SSE транспорта и разраб�
 
 **Вариант А (рекомендуется):** В репозитории уже есть собранный плагин —
 `engine\dist\CadEngine.Plugin.dll` (Release). Сборка не требуется.
+
+Файл в `engine\dist` уже включает инструменты ассоциаций и Ж/Б элементов.
+Они прошли живую проверку в nanoCAD BIM Строительство 26.
 
 **Вариант Б:** Собрать из исходников:
 ```powershell
@@ -193,7 +196,7 @@ py -m mypy server/src/
 
 | Вид тестов | Количество | Статус |
 |-----------|:----------:|:------:|
-| Автоматические тесты | 1093 passed, 257 skipped | ✅ |
+| Автоматические тесты | 1105 passed, 257 skipped | ✅ |
 | Нативные BIM объекты в nanoCAD | стена, окно, перекрытие, крыша, помещение | ✅ Проверено |
 | Покрытие Python-кода | 85% | ✅ |
 | MCP E2E (init → list → call) | 3/3 шага | ✅ |
@@ -207,7 +210,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 226 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 230 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -225,7 +228,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 226 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 230 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
@@ -299,6 +302,12 @@ SDK .NET 8 (для сборки проекта net6.0-windows) и nBIM SDK 26. �
 и `create_bim_space` создают нативные
 контурные объекты SDK по массиву точек `[[x,y], ...]`. Все размеры в миллиметрах;
 угол крыши задаётся в градусах.
+
+`create_bim_association` связывает два существующих объекта как master/slave,
+`get_bim_associations` читает их связи. `create_bim_concrete_beam` и
+`create_bim_concrete_column` создают нативные Ж/Б элементы по точному имени
+профиля из `search_bim_library` (`category: "concrete_profile"`). Эти новые
+операции собраны, прошли автоматические тесты и проверку в nanoCAD.
 
 Полная [матрица совместимости SDK](docs/SDK_COMPATIBILITY.md) показывает
 реализованные фабрики и остальные разделы архива. SDK содержит 102 команды в

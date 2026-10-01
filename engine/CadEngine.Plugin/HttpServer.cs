@@ -102,14 +102,6 @@ namespace CadEngine
             {
                 PluginEntry.DebugLog($"Request: {context.Request.HttpMethod} {context.Request.Url?.AbsolutePath}");
 
-                // Refresh document reference on every request.
-                // This ensures we always point to the current document,
-                // even after NEW/QNEW or other document-destroying operations.
-                // Note: RefreshDocument only overwrites ActiveDocument if
-                // MdiActiveDocument returns non-null (it may return null on background threads).
-                CadContext.RefreshDocument();
-                PluginEntry.DebugLog($"ActiveDocument={(CadContext.ActiveDocument != null ? CadContext.ActiveDocument.Name : "null")}");
-
                 var req = context.Request;
                 var method = req.HttpMethod.ToUpperInvariant();
                 var path = req.Url?.AbsolutePath?.TrimEnd('/') ?? "/";

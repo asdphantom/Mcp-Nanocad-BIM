@@ -66,7 +66,7 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 - Wall `wall_type` and `level` are explicitly rejected until their SDK mappings
   are verified. Space creation currently uses elevation zero.
 - Standard, dome, loft and sweep roof factories are implemented; slope roof
-  factories and editing commands are still pending.
+  factories and editing commands are implemented and live verified (2026-10-01).
 - The generic library search supports six known SDK categories and a name
   filter, returning at most 100 matches. The window catalog filters names
   containing `Окно`. The insertion
@@ -82,6 +82,6 @@ before it can be marked compatible.
 
 ## SDK API additions 01.10.2026
 
-Ten grid, slab-contour and mark operations are implemented in [BIM_SDK_EXTENSIONS.md](BIM_SDK_EXTENSIONS.md). CoordinateGridUI creation/listing/redistribution/assignment/clearing and BuildingSlabUI contour edits are mapped; motion/offset demonstration commands remain pending. BuildingOpeningUI new-mark operation is mapped. Native live verification remains pending.
+Ten grid, slab-contour and mark operations are implemented in [BIM_SDK_EXTENSIONS.md](BIM_SDK_EXTENSIONS.md). CoordinateGridUI creation/listing/redistribution/assignment/clearing and BuildingSlabUI contour edits are mapped; motion/offset demonstration commands remain pending. BuildingOpeningUI new-mark operation is mapped. Native live verification passed on 2026-10-01; see [report](LIVE_API_2026-10-01.md).
 
 Complete October 1 API update: [26 tools, examples and verification](API_UPDATE_2026-10-01.md).

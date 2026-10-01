@@ -35,7 +35,10 @@ properties, save/reopen DWG, and confirm the assigned ID persists.
 
 Release/x64 build: 0 errors, 11 existing warnings. Python suite:
 1120 passed, 257 skipped, coverage 85.80%. New material tests: 15.
-Live nanoCAD assignment and persistence have **not** been verified.
+Live listing, assignment and save/reopen persistence passed on 2026-10-01.
+Add was checked for an existing ID (`added=false`); all catalog materials
+were already in the test project. Fresh `added=true` was not exercised live.
+See [report](LIVE_API_2026-10-01.md).
 The rebuilt plugin is in `engine/dist`; the running installation was not replaced.
 
 This branch starts at `983481b`. Uncommitted work in the main checkout is excluded.

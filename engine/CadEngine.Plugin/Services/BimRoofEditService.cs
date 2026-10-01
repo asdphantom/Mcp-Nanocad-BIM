@@ -63,6 +63,7 @@ public static class BimRoofEditService
                 {
                     var roof = BuildingRoofSlopeFactory.Create(new Point3d(s.Start[0],s.Start[1],s.Start[2]),
                         new Point3d(s.End[0],s.End[1],s.End[2]),s.Points.Select(p => new Point2d(p[0],p[1])).ToArray(),s.Angle,s.Thickness);
+                    roof.BasePoint += new Vector3d(0,0,s.Start[2]);
                     Utilities.AddEntityToDatabase(doc.Database,tr,roof);
                     roof.UpdateElements();
                     slopes.Add(roof);

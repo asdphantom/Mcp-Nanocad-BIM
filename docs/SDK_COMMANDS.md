@@ -8,45 +8,45 @@ The original sample source remains in the user-provided SDK archive.
 | Area | Sample | SDK command | Status |
 |---|---|---|---|
 | Architecture | BuildingOpeningUI | `nBIMSDK_CreateWindows` | Core equivalent: `create_bim_window` |
-| Architecture | BuildingOpeningUI | `nBIMSDK_SetNewWindowMark` | Core equivalent: `new_bim_window_mark`; live pending |
-| Architecture | BuildingOpeningUI | `nBIMSDK_ChangeWindowMark` | Core equivalent: `copy_bim_window_mark`; keeps old catalog mark; live pending |
+| Architecture | BuildingOpeningUI | `nBIMSDK_SetNewWindowMark` | Core equivalent: `new_bim_window_mark`; live verified 2026-10-01 |
+| Architecture | BuildingOpeningUI | `nBIMSDK_ChangeWindowMark` | Core equivalent: `copy_bim_window_mark`; keeps old catalog mark; live verified 2026-10-01 |
 | Architecture | BuildingOpeningUI | `nBIMSDK_UpdateMark` | Pending |
 | Architecture | BuildingRoofUI | `nBIMSDK_RoofCreate` | Core equivalent: `create_bim_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_DomeRoofCreate` | Core equivalent: `create_bim_dome_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_LoftRoofCreate` | Core equivalent: `create_bim_loft_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_SweepRoofCreate` | Core equivalent: `create_bim_sweep_roof` |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopeCreate` | Core equivalent: `create_bim_roof_slope`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopesCreate` | Core equivalent: `create_bim_roof_slopes`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofAddContour` | Core equivalent: `add_bim_roof_contour`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofCutContour` | Core equivalent: `cut_bim_roof_contour`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofUpdateContour` | Core equivalent: `update_bim_roof_contour`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeAddConcour` | Core equivalent: `add_bim_roof_slope_contour`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeCutConcour` | Core equivalent: `cut_bim_roof_slope_contour`; live pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeUpdateContour` | Core equivalent: `update_bim_roof_slope_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopeCreate` | Core equivalent: `create_bim_roof_slope`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopesCreate` | Core equivalent: `create_bim_roof_slopes`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofAddContour` | Core equivalent: `add_bim_roof_contour`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofCutContour` | Core equivalent: `cut_bim_roof_contour`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofUpdateContour` | Core equivalent: `update_bim_roof_contour`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeAddConcour` | Core equivalent: `add_bim_roof_slope_contour`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeCutConcour` | Core equivalent: `cut_bim_roof_slope_contour`; live verified 2026-10-01 |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeUpdateContour` | Core equivalent: `update_bim_roof_slope_contour`; live verified 2026-10-01 |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabCreate` | Core equivalent: `create_bim_slab` |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabAddContour` | Core equivalent: `add_bim_slab_contour`; live pending |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Core equivalent: `cut_bim_slab_contour`; live pending |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabUpdateContour` | Core equivalent: `update_bim_slab_contour`; live pending |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabAddContour` | Core equivalent: `add_bim_slab_contour`; live verified 2026-10-01 |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Core equivalent: `cut_bim_slab_contour`; live verified 2026-10-01 |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabUpdateContour` | Core equivalent: `update_bim_slab_contour`; live verified 2026-10-01 |
 | Architecture | BuildingWallUI | `nBIMSDK_WallsCreate` | Core equivalent: `create_bim_wall` |
-| Architecture | BuildingWallUI | `nBIMSDK_WallShift` | Core equivalent: `shift_bim_wall`; live pending |
+| Architecture | BuildingWallUI | `nBIMSDK_WallShift` | Core equivalent: `shift_bim_wall`; live verified 2026-10-01 |
 | Architecture | SpaceUI | `nBIMSDK_SpaceCreate` | Core equivalent: `create_bim_space` |
 | Architecture | SpaceUI | `nBIMSDK_SpaceUpdate` | Pending |
 | Architecture | SpaceUI | `nBIMSDK_SpaceFromPolyline` | Pending |
 | Common | ConstructionStages | `NBIM_4DSIMULATION` | Pending |
 | Common | ConstructionStages | `nBIMSDK_4DSimulation` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_GetAxisList` | Core equivalent: `list_bim_coordinate_grids`; live pending |
-| Common | CoordinateGridUI | `nBIMSDK_CreateAxis` | Core equivalent: `create_bim_rectangular_grid`; live pending |
-| Common | CoordinateGridUI | `nBIMSDK_CreateRoundAxis` | Core equivalent: `create_bim_circular_grid`; live pending |
-| Common | CoordinateGridUI | `nBIMSDK_UpdateAxis` | Core equivalent: `redistribute_bim_grid_axes`; live pending |
-| Common | CoordinateGridUI | `nBIMSDK_AssignAxis` | Core equivalent: `assign_bim_coordinate_grid`; live pending |
-| Common | CoordinateGridUI | `nBIMSDK_ClearAxis` | Core equivalent: `clear_bim_coordinate_grid`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_GetAxisList` | Core equivalent: `list_bim_coordinate_grids`; live verified 2026-10-01 |
+| Common | CoordinateGridUI | `nBIMSDK_CreateAxis` | Core equivalent: `create_bim_rectangular_grid`; live verified 2026-10-01 |
+| Common | CoordinateGridUI | `nBIMSDK_CreateRoundAxis` | Core equivalent: `create_bim_circular_grid`; live verified 2026-10-01 |
+| Common | CoordinateGridUI | `nBIMSDK_UpdateAxis` | Core equivalent: `redistribute_bim_grid_axes`; live verified 2026-10-01 |
+| Common | CoordinateGridUI | `nBIMSDK_AssignAxis` | Core equivalent: `assign_bim_coordinate_grid`; live verified 2026-10-01 |
+| Common | CoordinateGridUI | `nBIMSDK_ClearAxis` | Core equivalent: `clear_bim_coordinate_grid`; live verified 2026-10-01 |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnMove` | Pending |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnOffset` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_GetUsedMaterials` | API implemented; live pending |
-| Common | MaterialLibraryUI | `nBIMSDK_GetProjectMaterials` | API implemented; live pending |
+| Common | MaterialLibraryUI | `nBIMSDK_GetUsedMaterials` | API implemented; live verified 2026-10-01 |
+| Common | MaterialLibraryUI | `nBIMSDK_GetProjectMaterials` | API implemented; live verified 2026-10-01 |
 | Common | MaterialLibraryUI | `nBIMSDK_RemoveAllMaterials` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_AddLibraryMaterials` | API implemented; live pending |
-| Common | MaterialLibraryUI | `nBIMSDK_AssignMaterial` | API implemented; live pending |
+| Common | MaterialLibraryUI | `nBIMSDK_AddLibraryMaterials` | API implemented; existing-ID idempotency verified 2026-10-01; fresh add untested |
+| Common | MaterialLibraryUI | `nBIMSDK_AssignMaterial` | API implemented; live verified 2026-10-01 |
 | Common | ncBIMSmgd_sample | `nBIMSDK_objects_list` | Pending |
 | Common | ObjectLibraryUI | `NBIMSDK_ReadMetalwareProfiles` | Partial: `search_bim_library` |
 | Common | ObjectLibraryUI | `NBIMSDK_AddLibraryObject` | Pending |

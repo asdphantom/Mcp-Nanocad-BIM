@@ -20,6 +20,7 @@ namespace CadEngine
         private static readonly ConcurrentQueue<(Func<object?> Action, TaskCompletionSource<object?> Tcs)> _queue = new();
         private static Timer? _timer;
         private static readonly object _lock = new();
+        private static int _processing;
 
         /// <summary>
         /// Start the polling timer on the main CAD thread.
@@ -45,30 +46,28 @@ namespace CadEngine
         /// </summary>
         /// <param name="action">Delegate to execute on main thread.</param>
         /// <param name="timeoutMs">Timeout in milliseconds (default 30000).</param>
-        /// <returns>The result of the delegate, or null on timeout/error.</returns>
+        /// <returns>The result of the delegate, or null on timeout; action errors are propagated.</returns>
         public static object? Execute(Func<object?> action, int timeoutMs = 30000)
         {
-            var tcs = new TaskCompletionSource<object?>();
+            var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
             _queue.Enqueue((action, tcs));
 
-            // Wake up the main thread by sending a no-op command
-            try
-            {
-                var doc = CadContext.ActiveDocument;
-                doc?.SendStringToExecute(" ", false, false, false);
-            }
-            catch { /* best effort */ }
+            // The UI timer drains the queue. A space is not a no-op in CAD:
+            // it can repeat the last command or answer an interactive prompt.
 
             try
             {
                 tcs.Task.Wait(timeoutMs);
                 if (tcs.Task.IsCompletedSuccessfully)
                     return tcs.Task.Result;
+                // A timed-out queued action must not mutate a later active document.
+                tcs.TrySetCanceled();
                 return null;
             }
-            catch
+            catch (AggregateException ex)
             {
-                return null;
+                System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(ex.GetBaseException()).Throw();
+                throw;
             }
         }
 
@@ -77,15 +76,16 @@ namespace CadEngine
         /// </summary>
         public static Task<object?> ExecuteAsync(Func<object?> action, int timeoutMs = 30000)
         {
-            var tcs = new TaskCompletionSource<object?>();
+            var tcs = new TaskCompletionSource<object?>(TaskCreationOptions.RunContinuationsAsynchronously);
             _queue.Enqueue((action, tcs));
-            try
-            {
-                var doc = CadContext.ActiveDocument;
-                doc?.SendStringToExecute(" ", false, false, false);
-            }
-            catch { }
-            return tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(timeoutMs));
+            // Let the UI timer drain the queue without sending command input.
+            return AwaitResult(tcs, timeoutMs);
+        }
+
+        private static async Task<object?> AwaitResult(TaskCompletionSource<object?> tcs, int timeoutMs)
+        {
+            try { return await tcs.Task.WaitAsync(TimeSpan.FromMilliseconds(timeoutMs)).ConfigureAwait(false); }
+            catch { tcs.TrySetCanceled(); throw; }
         }
 
         /// <summary>
@@ -95,20 +95,28 @@ namespace CadEngine
         /// </summary>
         private static void ProcessQueue()
         {
-            while (_queue.TryDequeue(out var item))
+            // Document.Open/modal CAD code can pump Windows messages, including another timer tick.
+            // Do not execute another native operation inside an unfinished operation.
+            if (Interlocked.Exchange(ref _processing, 1) != 0) return;
+            try
             {
-                try
+                while (_queue.TryDequeue(out var item))
                 {
-                    var result = item.Action();
-                    item.Tcs.TrySetResult(result);
-                }
-                catch (Exception ex)
-                {
-                    // The exception will be re-thrown on the waiting thread
-                    // when it awaits the task.
-                    item.Tcs.TrySetException(ex);
+                    if (item.Tcs.Task.IsCompleted) continue;
+                    try
+                    {
+                        CadContext.RefreshDocument();
+                        var result = item.Action();
+                        item.Tcs.TrySetResult(result);
+                    }
+                    catch (Exception ex)
+                    {
+                        PluginEntry.DebugLog($"Main thread action failed: {ex}");
+                        item.Tcs.TrySetException(ex);
+                    }
                 }
             }
+            finally { Volatile.Write(ref _processing, 0); }
         }
     }
 }

@@ -51,8 +51,8 @@ grid types through JSON `circular`. Other JSON keys match MCP argument names.
 
 Mutations use the CAD main thread, active-document lock and native transaction.
 Invalid entity classes or handles fail without commit. Python input tests and
-SDK compilation do not verify CAD graphics or persistence. Live acceptance must
-inspect grids/bindings/slab topology/mark and confirm save/reopen persistence.
+SDK compilation do not verify CAD graphics or persistence. Live grid/binding/slab-contour/mark checks and save/reopen persistence passed
+on 2026-10-01. See [report and limits](LIVE_API_2026-10-01.md).
 No installed nanoCAD plugin was replaced by this development branch.
 
 Verification: 57 new contract tests passed; complete suite 1233 passed,

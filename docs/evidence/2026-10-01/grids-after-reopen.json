@@ -1,0 +1,116 @@
+{
+  "success": true,
+  "grids": [
+    {
+      "handle": "B79",
+      "name": "\u0421\u0435\u0442\u043a\u0430 \u043e\u0441\u0435\u0439 \u043f\u0440\u043e\u0435\u043a\u0442\u0430",
+      "grid_type": "Default",
+      "x": [
+        {
+          "position": 0,
+          "label": "1*"
+        }
+      ],
+      "y": [
+        {
+          "position": 0,
+          "label": "A*"
+        }
+      ],
+      "z": [
+        {
+          "position": 0,
+          "label": "\u041f\u0435\u0440\u0432\u044b\u0439 \u044d\u0442\u0430\u0436"
+        }
+      ]
+    },
+    {
+      "handle": "E87",
+      "name": "API rect",
+      "grid_type": "Default",
+      "x": [
+        {
+          "position": 0,
+          "label": "1"
+        },
+        {
+          "position": 3000,
+          "label": "2"
+        },
+        {
+          "position": 6000,
+          "label": "3"
+        }
+      ],
+      "y": [
+        {
+          "position": 0,
+          "label": ""
+        },
+        {
+          "position": 4000,
+          "label": ""
+        },
+        {
+          "position": 8000,
+          "label": ""
+        }
+      ],
+      "z": [
+        {
+          "position": 0,
+          "label": ""
+        },
+        {
+          "position": 3000,
+          "label": ""
+        }
+      ]
+    },
+    {
+      "handle": "E88",
+      "name": "API circle",
+      "grid_type": "Circle",
+      "x": [
+        {
+          "position": 1000,
+          "label": "1"
+        },
+        {
+          "position": 2500,
+          "label": "2"
+        },
+        {
+          "position": 6000,
+          "label": "3"
+        }
+      ],
+      "y": [
+        {
+          "position": 0,
+          "label": ""
+        },
+        {
+          "position": 90,
+          "label": ""
+        },
+        {
+          "position": 180,
+          "label": ""
+        }
+      ],
+      "z": [
+        {
+          "position": 0,
+          "label": ""
+        },
+        {
+          "position": 3000,
+          "label": ""
+        }
+      ]
+    }
+  ],
+  "total": 3,
+  "truncated": false
+}

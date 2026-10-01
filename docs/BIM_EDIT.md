@@ -21,8 +21,8 @@ may be reused. It does not rewrite a whole series or change the library template
 Transactions and document locks cover native mutations; model regeneration
 uses `UpdateElements`.
 
-Build and Python contracts are verified; interactive appearance and save/reopen
-persistence still require testing inside nanoCAD. Python coverage measures the
+Live wall shift, read/copy marks and save/reopen persistence passed in nanoCAD
+BIM 26 on 2026-10-01. See [report](LIVE_API_2026-10-01.md). Python coverage measures the
 MCP/server path and does not establish native C# runtime coverage.
 
 Final Python suite: 1176 passed, 257 skipped; total statement coverage 86.22%.

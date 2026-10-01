@@ -83,7 +83,22 @@ public static class BimSdkService
                 var bt = (BlockTable)tr.GetObject(doc.Database.BlockTableId, OpenMode.ForRead);
                 var ms = (BlockTableRecord)tr.GetObject(bt[BlockTableRecord.ModelSpace], OpenMode.ForRead);
                 var grids = ms.Cast<ObjectId>().Select(id => tr.GetObject(id, OpenMode.ForRead)).OfType<CoordinateGrid>().ToArray();
-                return new { success = true, grids = grids.Take(req.Limit).Select(GridRow).ToArray(), total = grids.Length, truncated = grids.Length > req.Limit };
+                var rows = new List<object>();
+                foreach (var grid in grids.Take(req.Limit))
+                {
+                    try
+                    {
+                        // SDK 26 reference grid data requires write-open access;
+                        // this read transaction is rolled back without commit.
+                        grid.UpgradeOpen();
+                        rows.Add(GridRow(grid));
+                    }
+                    catch (Exception ex)
+                    {
+                        rows.Add(new { handle = grid.Handle.Value.ToString("X"), readable = false, error = ex.Message });
+                    }
+                }
+                return new { success = true, grids = rows, total = grids.Length, truncated = grids.Length > req.Limit };
             }
             if (operation == "grid-create")
             {

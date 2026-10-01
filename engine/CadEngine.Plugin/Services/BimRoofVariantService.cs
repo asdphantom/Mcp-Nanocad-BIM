@@ -47,17 +47,17 @@ namespace CadEngine.Services
                 {
                     case "dome":
                         var dome = BuildingRoofDomeFactory.Create(a, request.Thickness);
-                        dome.BasePoint = new Point3d(0, 0, request.BaseZ);
+                        dome.BasePoint += new Vector3d(0, 0, request.BaseZ);
                         entity = dome;
                         break;
                     case "loft":
                         var loft = BuildingRoofLoftFactory.Create(a, b, request.Height);
-                        loft.BasePoint = new Point3d(0, 0, request.BaseZ);
+                        loft.BasePoint += new Vector3d(0, 0, request.BaseZ);
                         entity = loft;
                         break;
                     default:
                         var sweep = BuildingRoofSweepFactory.Create(a, b);
-                        sweep.BasePoint = new Point3d(0, 0, request.BaseZ);
+                        sweep.BasePoint += new Vector3d(0, 0, request.BaseZ);
                         entity = sweep;
                         break;
                 }

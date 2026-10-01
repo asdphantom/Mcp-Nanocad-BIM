@@ -243,6 +243,9 @@ class HttpCadBridge:
     def bim_sdk_operation(self, operation, payload):
         return self._request("POST", f"/api/bim/sdk/{operation}", json_body=payload)
 
+    def bim_roof_operation(self, operation, payload):
+        return self._request("POST", f"/api/bim/roof-edit/{operation}", json_body=payload)
+
     def get_bim_associations(self, entity_handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/bim/association/{entity_handle}")
 

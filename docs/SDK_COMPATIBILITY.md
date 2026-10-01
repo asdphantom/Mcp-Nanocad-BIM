@@ -38,7 +38,7 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 | Area | Sample group | Commands in SDK sample | Native MCP coverage |
 |---|---|---:|---|
 | Architecture | BuildingOpeningUI | 4 | List/insertion verified; mark read/copy/new implemented, live pending; series update pending |
-| Architecture | BuildingRoofUI | 12 | Create standard, dome, loft and sweep roofs |
+| Architecture | BuildingRoofUI | 12 | All 12 mapped; four original factories previously verified; slope creation and six contour edits live pending |
 | Architecture | BuildingSlabUI | 4 | Creation verified; add/cut/update contours implemented, live pending |
 | Architecture | BuildingWallUI | 2 | Creation verified; translation implemented, live pending |
 | Architecture | SpaceUI | 3 | Create space |
@@ -84,4 +84,4 @@ before it can be marked compatible.
 
 Ten grid, slab-contour and mark operations are implemented in [BIM_SDK_EXTENSIONS.md](BIM_SDK_EXTENSIONS.md). CoordinateGridUI creation/listing/redistribution/assignment/clearing and BuildingSlabUI contour edits are mapped; motion/offset demonstration commands remain pending. BuildingOpeningUI new-mark operation is mapped. Native live verification remains pending.
 
-Complete October 1 API update: [18 tools, examples and verification](API_UPDATE_2026-10-01.md).
+Complete October 1 API update: [26 tools, examples and verification](API_UPDATE_2026-10-01.md).

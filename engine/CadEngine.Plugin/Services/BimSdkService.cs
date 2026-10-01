@@ -33,7 +33,7 @@ public static class BimSdkService
         values != null && values.Length >= min && values.Length <= max && values.All(double.IsFinite);
     private static bool Positions(double[]? values) => Numbers(values, 1, 100) && values!.Distinct().Count() == values!.Length;
 
-    private static bool Polygon(double[][]? points)
+    internal static bool Polygon(double[][]? points)
     {
         if (points == null || points.Length < 3 || points.Length > 200 || points.Any(p => !Numbers(p, 2, 2))) return false;
         if (points.Select(p => (p[0], p[1])).Distinct().Count() != points.Length) return false;

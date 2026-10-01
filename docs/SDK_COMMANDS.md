@@ -15,14 +15,14 @@ The original sample source remains in the user-provided SDK archive.
 | Architecture | BuildingRoofUI | `nBIMSDK_DomeRoofCreate` | Core equivalent: `create_bim_dome_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_LoftRoofCreate` | Core equivalent: `create_bim_loft_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_SweepRoofCreate` | Core equivalent: `create_bim_sweep_roof` |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopeCreate` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopesCreate` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofAddContour` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofCutContour` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_RoofUpdateContour` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeAddConcour` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeCutConcour` | Pending |
-| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeUpdateContour` | Pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopeCreate` | Core equivalent: `create_bim_roof_slope`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofSlopesCreate` | Core equivalent: `create_bim_roof_slopes`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofAddContour` | Core equivalent: `add_bim_roof_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofCutContour` | Core equivalent: `cut_bim_roof_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_RoofUpdateContour` | Core equivalent: `update_bim_roof_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeAddConcour` | Core equivalent: `add_bim_roof_slope_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeCutConcour` | Core equivalent: `cut_bim_roof_slope_contour`; live pending |
+| Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeUpdateContour` | Core equivalent: `update_bim_roof_slope_contour`; live pending |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabCreate` | Core equivalent: `create_bim_slab` |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabAddContour` | Core equivalent: `add_bim_slab_contour`; live pending |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Core equivalent: `cut_bim_slab_contour`; live pending |
@@ -109,3 +109,5 @@ The original sample source remains in the user-provided SDK archive.
 | Structure | ReinforcementUI | `nBIMSDK` | Pending |
 | Structure | ReinforcementUI | `nBIMSDK` | Pending |
 | Structure | ReinforcementUI | `nBIMSDK_CreateReinfSpiral` | Pending |
+
+All 12 BuildingRoofUI commands are mapped: [contracts and live verification](BUILDING_ROOF_UI.md).

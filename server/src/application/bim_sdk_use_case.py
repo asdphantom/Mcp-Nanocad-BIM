@@ -60,8 +60,7 @@ class BimSdkUseCase(BimStructureUseCase):
         self._edit_handle(handle)
         return self._operation("grid-clear", handle=handle)
 
-    def _slab(self, operation, handle, points):
-        self._edit_handle(handle)
+    def _polygon(self, points):
         if not isinstance(points, (list, tuple)) or not 3 <= len(points) <= 200:
             raise ValueError("Contour requires 3 to 200 vertices")
         for p in points:
@@ -85,6 +84,10 @@ class BimSdkUseCase(BimStructureUseCase):
                 c, d = vertices[j], vertices[(j+1) % len(vertices)]
                 if (orient(a,b,c)*orient(a,b,d) < 0 and orient(c,d,a)*orient(c,d,b) < 0) or any((touches(a,b,c), touches(a,b,d), touches(c,d,a), touches(c,d,b))):
                     raise ValueError("Contour must not self-intersect")
+
+    def _slab(self, operation, handle, points):
+        self._edit_handle(handle)
+        self._polygon(points)
         return self._operation(operation, handle=handle, points=points)
 
     def add_bim_slab_contour(self, handle, points):

@@ -206,6 +206,11 @@ namespace CadEngine
                 var req = ParseBody<BimSdkRequest>(request);
                 return req != null ? BimSdkService.Execute(path.Substring("/api/bim/sdk/".Length), req) : BadRequest();
             }
+            if (method == "POST" && path.StartsWith("/api/bim/roof-edit/"))
+            {
+                var req = ParseBody<BimRoofEditRequest>(request);
+                return req != null ? BimRoofEditService.Execute(path.Substring("/api/bim/roof-edit/".Length), req) : BadRequest();
+            }
             if (method == "GET" && path == "/api/bim/materials")
             {
                 var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");

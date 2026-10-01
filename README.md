@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1233%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1272%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 248 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 256 инструментов для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (248 инструментов)
+Python MCP Server (256 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,9 +52,9 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| BIM Строительство | 34 | DWG-конструкции, нативные архитектурные и бетонные элементы, ассоциации |
+| BIM Строительство | 42 | DWG-конструкции, нативные архитектурные и бетонные элементы, ассоциации |
 | Материалы BIM | 5 | библиотека, проект, использованные материалы, добавление и назначение |
-| **ИТОГО** | **248** | |
+| **ИТОГО** | **256** | |
 
 
 ## nanoCAD BIM Строительство
@@ -211,7 +211,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 248 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 256 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -229,7 +229,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 248 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 256 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
@@ -338,4 +338,6 @@ Copy-Item engine\CadEngine.Plugin\bin\Release\CadEngine.Plugin.dll engine\dist\C
 
 ## Обновление API 01.10.2026
 
-[18 новых функций, примеры вызовов и статус проверки](docs/API_UPDATE_2026-10-01.md).
+[26 новых функций, примеры вызовов и статус проверки](docs/API_UPDATE_2026-10-01.md).
+
+[BuildingRoofUI: все 12 команд SDK](docs/BUILDING_ROOF_UI.md) — добавлены восемь операций со скатами и контурами.

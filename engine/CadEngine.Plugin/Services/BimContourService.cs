@@ -54,7 +54,7 @@ namespace CadEngine.Services
                     case "slab":
                         var slab = BuildingSlabFactory.Create(points, request.Thickness);
                         slab.BindingMode = BuildingSlab.BindingType.Center;
-                        slab.BasePoint = new Point3d(0, 0, request.BaseZ);
+                        slab.BasePoint += new Vector3d(0, 0, request.BaseZ);
                         slab.UpdateElements();
                         entity = slab;
                         break;

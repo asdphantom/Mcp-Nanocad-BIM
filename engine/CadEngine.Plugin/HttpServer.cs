@@ -102,14 +102,6 @@ namespace CadEngine
             {
                 PluginEntry.DebugLog($"Request: {context.Request.HttpMethod} {context.Request.Url?.AbsolutePath}");
 
-                // Refresh document reference on every request.
-                // This ensures we always point to the current document,
-                // even after NEW/QNEW or other document-destroying operations.
-                // Note: RefreshDocument only overwrites ActiveDocument if
-                // MdiActiveDocument returns non-null (it may return null on background threads).
-                CadContext.RefreshDocument();
-                PluginEntry.DebugLog($"ActiveDocument={(CadContext.ActiveDocument != null ? CadContext.ActiveDocument.Name : "null")}");
-
                 var req = context.Request;
                 var method = req.HttpMethod.ToUpperInvariant();
                 var path = req.Url?.AbsolutePath?.TrimEnd('/') ?? "/";
@@ -196,6 +188,34 @@ namespace CadEngine
                 return req != null ? _systemService.SetVariable(varSetName!, req.Value) : BadRequest();
             }
 
+            if (method == "POST" && (path == "/api/bim/edit/shift" || path == "/api/bim/edit/mark" || path == "/api/bim/edit/copy-mark"))
+            {
+                var req = ParseBody<BimEditRequest>(request);
+                return req != null ? BimEditService.Execute(path.Substring("/api/bim/edit/".Length), req) : BadRequest();
+            }
+            if (method == "POST" && path.StartsWith("/api/bim/sdk/"))
+            {
+                var req = ParseBody<BimSdkRequest>(request);
+                return req != null ? BimSdkService.Execute(path.Substring("/api/bim/sdk/".Length), req) : BadRequest();
+            }
+            if (method == "POST" && path.StartsWith("/api/bim/roof-edit/"))
+            {
+                var req = ParseBody<BimRoofEditRequest>(request);
+                return req != null ? BimRoofEditService.Execute(path.Substring("/api/bim/roof-edit/".Length), req) : BadRequest();
+            }
+            if (method == "GET" && path == "/api/bim/materials")
+            {
+                var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");
+                if (query["limit"] != null && !int.TryParse(query["limit"], out _)) return BadRequest();
+                var limit = query["limit"] == null ? 50 : int.Parse(query["limit"]!);
+                return BimMaterialService.List(query["scope"] ?? "project", query["name"], limit);
+            }
+            if (method == "POST" && (path == "/api/bim/materials/add" || path == "/api/bim/materials/assign"))
+            {
+                var req = ParseBody<BimMaterialRequest>(request);
+                if (req == null) return BadRequest();
+                return path.EndsWith("/add") ? BimMaterialService.Add(req) : BimMaterialService.Assign(req);
+            }
             if (method == "GET" && path == "/api/bim/library")
             {
                 var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");

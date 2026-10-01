@@ -1,0 +1,377 @@
+{
+  "success": true,
+  "document": "native-api-verification.dwg",
+  "entities": [
+    {
+      "handle": "B79",
+      "type": "CoordinateGridRef",
+      "min": [
+        0,
+        0,
+        0
+      ],
+      "max": [
+        0,
+        0,
+        0
+      ]
+    },
+    {
+      "handle": "E3F",
+      "type": "ImpEntity",
+      "min": [
+        -3950,
+        -3700,
+        0
+      ],
+      "max": [
+        20450,
+        14050,
+        940
+      ]
+    },
+    {
+      "handle": "E4F",
+      "type": "BuildingRoof",
+      "min": [
+        -150.00000000011747,
+        -150.00000000011713,
+        2913.3974596215235
+      ],
+      "max": [
+        5150.000000000119,
+        3650.0000000001182,
+        4183.568051839116
+      ],
+      "material_id": null,
+      "contour": [
+        [
+          0,
+          0,
+          3000
+        ],
+        [
+          5000,
+          0,
+          3000
+        ],
+        [
+          5000,
+          3500,
+          3000
+        ],
+        [
+          0,
+          3500,
+          3000
+        ]
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E51",
+      "type": "BuildingRoofSlope",
+      "min": [
+        8000,
+        -3.799982550845016e-11,
+        3000
+      ],
+      "max": [
+        13000,
+        3499.999999999557,
+        5193.931022921346
+      ],
+      "material_id": null,
+      "contour": [
+        [
+          8000,
+          1.4210854715202004e-14,
+          3000
+        ],
+        [
+          13000,
+          1.4210854715202004e-14,
+          3000
+        ],
+        [
+          13000,
+          3500.0000000000005,
+          3000
+        ],
+        [
+          8000,
+          3500.0000000000005,
+          3000
+        ]
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E52",
+      "type": "BuildingRoofSlope",
+      "min": [
+        16000,
+        -3.410605131648481e-13,
+        3000
+      ],
+      "max": [
+        20000,
+        2999.9999999999995,
+        6212.132034355964
+      ],
+      "material_id": null,
+      "contour": [
+        [
+          16000,
+          0,
+          3000
+        ],
+        [
+          20000,
+          0,
+          3000
+        ],
+        [
+          20000,
+          3000,
+          3000
+        ],
+        [
+          16000,
+          3000,
+          3000
+        ]
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E53",
+      "type": "BuildingRoofSlope",
+      "min": [
+        22000,
+        -3.410605131648481e-13,
+        3000
+      ],
+      "max": [
+        26000,
+        2999.9999999999995,
+        6212.132034355964
+      ],
+      "material_id": null,
+      "contour": [
+        [
+          22000,
+          0,
+          3000
+        ],
+        [
+          26000,
+          0,
+          3000
+        ],
+        [
+          26000,
+          3000,
+          3000
+        ],
+        [
+          22000,
+          3000,
+          3000
+        ]
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E54",
+      "type": "BuildingRoofDome",
+      "min": [
+        0,
+        -1500,
+        7500
+      ],
+      "max": [
+        1500,
+        1477.2116295183123,
+        9500
+      ],
+      "material_id": "",
+      "grid_handle": null
+    },
+    {
+      "handle": "E55",
+      "type": "BuildingRoofLoft",
+      "min": [
+        -1.1368683772161603e-13,
+        -2000.0000000000005,
+        7500
+      ],
+      "max": [
+        2000.0000000000005,
+        2000,
+        9500
+      ],
+      "material_id": "",
+      "grid_handle": null
+    },
+    {
+      "handle": "E56",
+      "type": "BuildingRoofSweep",
+      "min": [
+        16500,
+        7000,
+        7500
+      ],
+      "max": [
+        20500,
+        11000,
+        9500
+      ],
+      "material_id": "",
+      "grid_handle": null
+    },
+    {
+      "handle": "E57",
+      "type": "LinearBuildingWall",
+      "min": [
+        100,
+        16050,
+        0
+      ],
+      "max": [
+        10100,
+        16350,
+        3000
+      ],
+      "material_id": null,
+      "start": [
+        100,
+        16200,
+        0
+      ],
+      "end": [
+        10100,
+        16200,
+        0
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E58",
+      "type": "BuildingOpening",
+      "min": [
+        2050,
+        16000,
+        680
+      ],
+      "max": [
+        3150,
+        16400,
+        2500
+      ],
+      "material_id": "ОТ-001",
+      "mark": "API-1",
+      "grid_handle": null
+    },
+    {
+      "handle": "E63",
+      "type": "BuildingOpening",
+      "min": [
+        6550,
+        16000,
+        680
+      ],
+      "max": [
+        7650,
+        16400,
+        2500
+      ],
+      "material_id": "ОТ-001",
+      "mark": "API-1",
+      "grid_handle": null
+    },
+    {
+      "handle": "E6E",
+      "type": "BuildingSlab",
+      "min": [
+        16000,
+        16000,
+        100
+      ],
+      "max": [
+        20000,
+        19000,
+        300
+      ],
+      "material_id": "ББ-001",
+      "thickness": 200,
+      "contour": [
+        [
+          16000,
+          16000,
+          200
+        ],
+        [
+          20000,
+          16000,
+          200
+        ],
+        [
+          20000,
+          19000,
+          200
+        ],
+        [
+          16000,
+          19000,
+          200
+        ]
+      ],
+      "grid_handle": null
+    },
+    {
+      "handle": "E87",
+      "type": "CoordinateGridRef",
+      "min": [
+        30000,
+        0,
+        0
+      ],
+      "max": [
+        36000,
+        8000,
+        3000
+      ]
+    },
+    {
+      "handle": "E88",
+      "type": "CoordinateGridRef",
+      "min": [
+        24000,
+        0,
+        0
+      ],
+      "max": [
+        36000,
+        6000,
+        3000
+      ]
+    },
+    {
+      "handle": "E95",
+      "type": "ConcreteBeam",
+      "min": [
+        30000,
+        15850,
+        700
+      ],
+      "max": [
+        34000,
+        16150,
+        1000
+      ],
+      "material_id": "БТ-001",
+      "grid_handle": "E87"
+    }
+  ]
+}

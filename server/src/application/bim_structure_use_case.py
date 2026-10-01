@@ -117,3 +117,25 @@ class BimStructureUseCase:
         z2: float,
     ) -> dict[str, Any]:
         return self._concrete_member("column", profile_name, x1, y1, z1, x2, y2, z2)
+
+    @classmethod
+    def _edit_handle(cls, value):
+        if not cls._handle(value) or int(value, 16) > 0x7FFFFFFFFFFFFFFF:
+            raise ValueError("Expected a positive signed-64-bit hexadecimal handle")
+
+    def shift_bim_wall(self, handle, dx, dy, dz=0):
+        self._edit_handle(handle)
+        if any(isinstance(v, bool) or not isinstance(v, (int, float)) or not math.isfinite(v) for v in (dx, dy, dz)):
+            raise ValueError("Offsets must be finite numbers")
+        return self._call("shift_bim_wall", {"handle": handle, "dx": dx, "dy": dy, "dz": dz})
+
+    def get_bim_window_mark(self, handle):
+        self._edit_handle(handle)
+        return self._call("get_bim_window_mark", {"handle": handle})
+
+    def copy_bim_window_mark(self, source_handle, handle):
+        self._edit_handle(source_handle)
+        self._edit_handle(handle)
+        if int(source_handle, 16) == int(handle, 16):
+            raise ValueError("Source and target must be different entities")
+        return self._call("copy_bim_window_mark", {"source_handle": source_handle, "handle": handle})

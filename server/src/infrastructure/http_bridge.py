@@ -216,8 +216,35 @@ class HttpCadBridge:
         """Request a native wall from the in-process BIM adapter."""
         return self._request("POST", "/api/bim/wall", json_body=payload)
 
+    def list_bim_materials(self, scope: str, name: str | None, limit: int) -> dict[str, Any] | None:
+        query = {"scope": scope, "limit": limit}
+        if name is not None:
+            query["name"] = name
+        return self._request("GET", "/api/bim/materials?" + urlencode(query))
+
+    def add_bim_project_material(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        return self._request("POST", "/api/bim/materials/add", json_body=payload)
+
+    def assign_bim_material(self, payload: dict[str, Any]) -> dict[str, Any] | None:
+        return self._request("POST", "/api/bim/materials/assign", json_body=payload)
+
     def create_bim_association(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         return self._request("POST", "/api/bim/association", json_body=payload)
+
+    def shift_bim_wall(self, payload):
+        return self._request("POST", "/api/bim/edit/shift", json_body=payload)
+
+    def get_bim_window_mark(self, payload):
+        return self._request("POST", "/api/bim/edit/mark", json_body=payload)
+
+    def copy_bim_window_mark(self, payload):
+        return self._request("POST", "/api/bim/edit/copy-mark", json_body=payload)
+
+    def bim_sdk_operation(self, operation, payload):
+        return self._request("POST", f"/api/bim/sdk/{operation}", json_body=payload)
+
+    def bim_roof_operation(self, operation, payload):
+        return self._request("POST", f"/api/bim/roof-edit/{operation}", json_body=payload)
 
     def get_bim_associations(self, entity_handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/bim/association/{entity_handle}")

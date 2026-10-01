@@ -2,9 +2,9 @@
 
 [![Python](https://img.shields.io/badge/python-3.13+-blue.svg)](https://www.python.org/downloads/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
-[![Tests](https://img.shields.io/badge/tests-1176%20passed-green.svg)]()
+[![Tests](https://img.shields.io/badge/tests-1233%20passed-green.svg)]()
 
-**MCP-сервер для автоматизации nanoCAD 26** — 238 инструментов для 2D/3D черчения,
+**MCP-сервер для автоматизации nanoCAD 26** — 248 инструментов для 2D/3D черчения,
 инженерных символов, размеров, параметризации, листового металла, сборок и MultiCAD API.
 
 Работает через протокол [Model Context Protocol (MCP)](https://modelcontextprotocol.io/)
@@ -15,7 +15,7 @@ AI Agent (opencode / Claude / Cursor)
      │
      │ MCP (stdio / SSE)
      ▼
-Python MCP Server (238 инструментов)
+Python MCP Server (248 инструментов)
      │
      │ HTTP REST (localhost:5080)
      ▼
@@ -52,9 +52,9 @@ nanoCAD — чертёж
 | NURBS / IFC | 5 | NURBS-кривые, поверхности, IFC импорт |
 | MultiCAD API | 12 | оси, помещения, параметрические объекты, реакторы |
 | Прочее | 12 | сетка, выборка, обрезка, удлинение, смещение, вьюпорт, рендер |
-| BIM Строительство | 24 | DWG-конструкции, нативные архитектурные и бетонные элементы, ассоциации |
+| BIM Строительство | 34 | DWG-конструкции, нативные архитектурные и бетонные элементы, ассоциации |
 | Материалы BIM | 5 | библиотека, проект, использованные материалы, добавление и назначение |
-| **ИТОГО** | **238** | |
+| **ИТОГО** | **248** | |
 
 
 ## nanoCAD BIM Строительство
@@ -211,7 +211,7 @@ server/src/
 ├── domain/              # Сущности, Value Objects, порты (ICadRepository, protocols)
 ├── application/         # Use cases, DTO, бизнес-логика
 ├── infrastructure/      # HTTP bridge (.NET plugin), COM bridge (fallback)
-└── presentation/        # MCP сервер (stdio/SSE), 238 tool definitions, MCP Resources/Prompts
+└── presentation/        # MCP сервер (stdio/SSE), 248 tool definitions, MCP Resources/Prompts
 
 engine/CadEngine.Plugin/
 ├── Services/            # 35+ C# сервисов (EntityService, SolidService, SymbolService ...)
@@ -229,7 +229,7 @@ engine/CadEngine.Plugin/
 
 | Возможность | Статус | Описание |
 |-------------|:------:|----------|
-| Tools | ✅ 238 | Полный набор 2D/3D/инженерных инструментов |
+| Tools | ✅ 248 | Полный набор 2D/3D/инженерных инструментов |
 | Resources | ✅ 4 + 1 template | Чтение документа, слоёв, системы, параметров, сущностей |
 | Prompts | ✅ 2 stubs | `create-part` и `parametric-design` для пошаговых сценариев |
 | isError | ✅ | Все пути ошибок возвращают `CallToolResult(isError=True)` |
@@ -333,3 +333,5 @@ Copy-Item engine\CadEngine.Plugin\bin\Release\CadEngine.Plugin.dll engine\dist\C
 Пять новых инструментов: [контракты и проверка](docs/BIM_MATERIALS.md). Сборка и тесты пройдены; проверка в nanoCAD ещё требуется.
 
 Нативное редактирование: `shift_bim_wall`, `get_bim_window_mark`, `copy_bim_window_mark`. [Контракты](docs/BIM_EDIT.md).
+
+Десять операций SDK: [сетки осей, контуры плит и новые марки окон](docs/BIM_SDK_EXTENSIONS.md).

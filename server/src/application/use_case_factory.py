@@ -11,6 +11,7 @@ from typing import TYPE_CHECKING, Any
 from src.application.bim_contour_use_case import BimContourUseCase
 from src.application.bim_library_use_case import BimLibraryUseCase
 from src.application.bim_material_use_case import BimMaterialUseCase
+from src.application.bim_sdk_use_case import BimSdkUseCase
 from src.application.bim_roof_variant_use_case import BimRoofVariantUseCase
 from src.application.bim_structure_use_case import BimStructureUseCase
 from src.application.bim_wall_use_case import BimWallUseCase
@@ -215,6 +216,10 @@ class UseCaseFactory:
     @property
     def bim_wall(self) -> BimWallUseCase:
         return self._get("bim_wall", lambda: BimWallUseCase(self._http))
+
+    @property
+    def bim_sdk(self) -> BimSdkUseCase:
+        return self._get("bim_sdk", lambda: BimSdkUseCase(self._http))
 
     @property
     def bim_material(self) -> BimMaterialUseCase:

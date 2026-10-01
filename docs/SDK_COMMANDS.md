@@ -8,7 +8,7 @@ The original sample source remains in the user-provided SDK archive.
 | Area | Sample | SDK command | Status |
 |---|---|---|---|
 | Architecture | BuildingOpeningUI | `nBIMSDK_CreateWindows` | Core equivalent: `create_bim_window` |
-| Architecture | BuildingOpeningUI | `nBIMSDK_SetNewWindowMark` | Pending |
+| Architecture | BuildingOpeningUI | `nBIMSDK_SetNewWindowMark` | Core equivalent: `new_bim_window_mark`; live pending |
 | Architecture | BuildingOpeningUI | `nBIMSDK_ChangeWindowMark` | Core equivalent: `copy_bim_window_mark`; keeps old catalog mark; live pending |
 | Architecture | BuildingOpeningUI | `nBIMSDK_UpdateMark` | Pending |
 | Architecture | BuildingRoofUI | `nBIMSDK_RoofCreate` | Core equivalent: `create_bim_roof` |
@@ -24,9 +24,9 @@ The original sample source remains in the user-provided SDK archive.
 | Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeCutConcour` | Pending |
 | Architecture | BuildingRoofUI | `nBIMSDK_SingleSlopeUpdateContour` | Pending |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabCreate` | Core equivalent: `create_bim_slab` |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabAddContour` | Pending |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Pending |
-| Architecture | BuildingSlabUI | `nBIMSDK_SlabUpdateContour` | Pending |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabAddContour` | Core equivalent: `add_bim_slab_contour`; live pending |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Core equivalent: `cut_bim_slab_contour`; live pending |
+| Architecture | BuildingSlabUI | `nBIMSDK_SlabUpdateContour` | Core equivalent: `update_bim_slab_contour`; live pending |
 | Architecture | BuildingWallUI | `nBIMSDK_WallsCreate` | Core equivalent: `create_bim_wall` |
 | Architecture | BuildingWallUI | `nBIMSDK_WallShift` | Core equivalent: `shift_bim_wall`; live pending |
 | Architecture | SpaceUI | `nBIMSDK_SpaceCreate` | Core equivalent: `create_bim_space` |
@@ -34,12 +34,12 @@ The original sample source remains in the user-provided SDK archive.
 | Architecture | SpaceUI | `nBIMSDK_SpaceFromPolyline` | Pending |
 | Common | ConstructionStages | `NBIM_4DSIMULATION` | Pending |
 | Common | ConstructionStages | `nBIMSDK_4DSimulation` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_GetAxisList` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_CreateAxis` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_CreateRoundAxis` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_UpdateAxis` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_AssignAxis` | Pending |
-| Common | CoordinateGridUI | `nBIMSDK_ClearAxis` | Pending |
+| Common | CoordinateGridUI | `nBIMSDK_GetAxisList` | Core equivalent: `list_bim_coordinate_grids`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_CreateAxis` | Core equivalent: `create_bim_rectangular_grid`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_CreateRoundAxis` | Core equivalent: `create_bim_circular_grid`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_UpdateAxis` | Core equivalent: `redistribute_bim_grid_axes`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_AssignAxis` | Core equivalent: `assign_bim_coordinate_grid`; live pending |
+| Common | CoordinateGridUI | `nBIMSDK_ClearAxis` | Core equivalent: `clear_bim_coordinate_grid`; live pending |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnMove` | Pending |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnOffset` | Pending |
 | Common | MaterialLibraryUI | `nBIMSDK_GetUsedMaterials` | API implemented; live pending |

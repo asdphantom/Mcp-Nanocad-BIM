@@ -79,3 +79,7 @@ The next implementation groups are roof slopes, contour editing, grids,
 material and object libraries, project management, structure and reinforcement,
 and parametric objects. Each group needs a typed API contract and live checks
 before it can be marked compatible.
+
+## SDK API additions 01.10.2026
+
+Ten grid, slab-contour and mark operations are implemented in [BIM_SDK_EXTENSIONS.md](BIM_SDK_EXTENSIONS.md). CoordinateGridUI creation/listing/redistribution/assignment/clearing and BuildingSlabUI contour edits are mapped; motion/offset demonstration commands remain pending. BuildingOpeningUI new-mark operation is mapped. Native live verification remains pending.

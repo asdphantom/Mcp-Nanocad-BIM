@@ -9,7 +9,7 @@ The original sample source remains in the user-provided SDK archive.
 |---|---|---|---|
 | Architecture | BuildingOpeningUI | `nBIMSDK_CreateWindows` | Core equivalent: `create_bim_window` |
 | Architecture | BuildingOpeningUI | `nBIMSDK_SetNewWindowMark` | Pending |
-| Architecture | BuildingOpeningUI | `nBIMSDK_ChangeWindowMark` | Pending |
+| Architecture | BuildingOpeningUI | `nBIMSDK_ChangeWindowMark` | Core equivalent: `copy_bim_window_mark`; keeps old catalog mark; live pending |
 | Architecture | BuildingOpeningUI | `nBIMSDK_UpdateMark` | Pending |
 | Architecture | BuildingRoofUI | `nBIMSDK_RoofCreate` | Core equivalent: `create_bim_roof` |
 | Architecture | BuildingRoofUI | `nBIMSDK_DomeRoofCreate` | Core equivalent: `create_bim_dome_roof` |
@@ -28,7 +28,7 @@ The original sample source remains in the user-provided SDK archive.
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabCutContour` | Pending |
 | Architecture | BuildingSlabUI | `nBIMSDK_SlabUpdateContour` | Pending |
 | Architecture | BuildingWallUI | `nBIMSDK_WallsCreate` | Core equivalent: `create_bim_wall` |
-| Architecture | BuildingWallUI | `nBIMSDK_WallShift` | Pending |
+| Architecture | BuildingWallUI | `nBIMSDK_WallShift` | Core equivalent: `shift_bim_wall`; live pending |
 | Architecture | SpaceUI | `nBIMSDK_SpaceCreate` | Core equivalent: `create_bim_space` |
 | Architecture | SpaceUI | `nBIMSDK_SpaceUpdate` | Pending |
 | Architecture | SpaceUI | `nBIMSDK_SpaceFromPolyline` | Pending |

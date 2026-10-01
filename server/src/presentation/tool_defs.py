@@ -2156,8 +2156,26 @@ TOOL_DEFS.extend([{'name': 'list_bim_library_materials',
                  'handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'}},
   'required': ['material_id', 'handle']}])
 
+TOOL_DEFS.extend([{'name': 'shift_bim_wall',
+  'description': 'Translate one native wall by finite offsets in millimetres.',
+  'properties': {'handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'},
+                 'dx': {'type': 'number'},
+                 'dy': {'type': 'number'},
+                 'dz': {'type': 'number', 'default': 0}},
+  'required': ['handle', 'dx', 'dy']},
+ {'name': 'get_bim_window_mark',
+  'description': 'Read the mark of one native BuildingOpening.',
+  'properties': {'handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'}},
+  'required': ['handle']},
+ {'name': 'copy_bim_window_mark',
+  'description': 'Copy the existing mark from one native opening to another; old catalog marks are '
+                 'retained.',
+  'properties': {'handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'},
+                 'source_handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'}},
+  'required': ['handle', 'source_handle']}])
+
 # Verify count
-assert len(TOOL_DEFS) == 235, f"Expected 235 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 238, f"Expected 238 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

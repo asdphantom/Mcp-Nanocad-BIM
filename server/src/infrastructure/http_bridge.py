@@ -231,6 +231,15 @@ class HttpCadBridge:
     def create_bim_association(self, payload: dict[str, Any]) -> dict[str, Any] | None:
         return self._request("POST", "/api/bim/association", json_body=payload)
 
+    def shift_bim_wall(self, payload):
+        return self._request("POST", "/api/bim/edit/shift", json_body=payload)
+
+    def get_bim_window_mark(self, payload):
+        return self._request("POST", "/api/bim/edit/mark", json_body=payload)
+
+    def copy_bim_window_mark(self, payload):
+        return self._request("POST", "/api/bim/edit/copy-mark", json_body=payload)
+
     def get_bim_associations(self, entity_handle: str) -> dict[str, Any] | None:
         return self._request("GET", f"/api/bim/association/{entity_handle}")
 

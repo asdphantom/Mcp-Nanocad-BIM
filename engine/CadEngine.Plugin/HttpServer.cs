@@ -196,6 +196,11 @@ namespace CadEngine
                 return req != null ? _systemService.SetVariable(varSetName!, req.Value) : BadRequest();
             }
 
+            if (method == "POST" && (path == "/api/bim/edit/shift" || path == "/api/bim/edit/mark" || path == "/api/bim/edit/copy-mark"))
+            {
+                var req = ParseBody<BimEditRequest>(request);
+                return req != null ? BimEditService.Execute(path.Substring("/api/bim/edit/".Length), req) : BadRequest();
+            }
             if (method == "GET" && path == "/api/bim/materials")
             {
                 var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");

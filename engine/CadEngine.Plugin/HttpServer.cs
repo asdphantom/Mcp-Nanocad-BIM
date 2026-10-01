@@ -196,6 +196,19 @@ namespace CadEngine
                 return req != null ? _systemService.SetVariable(varSetName!, req.Value) : BadRequest();
             }
 
+            if (method == "GET" && path == "/api/bim/materials")
+            {
+                var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");
+                if (query["limit"] != null && !int.TryParse(query["limit"], out _)) return BadRequest();
+                var limit = query["limit"] == null ? 50 : int.Parse(query["limit"]!);
+                return BimMaterialService.List(query["scope"] ?? "project", query["name"], limit);
+            }
+            if (method == "POST" && (path == "/api/bim/materials/add" || path == "/api/bim/materials/assign"))
+            {
+                var req = ParseBody<BimMaterialRequest>(request);
+                if (req == null) return BadRequest();
+                return path.EndsWith("/add") ? BimMaterialService.Add(req) : BimMaterialService.Assign(req);
+            }
             if (method == "GET" && path == "/api/bim/library")
             {
                 var query = HttpUtility.ParseQueryString(request.Url?.Query ?? "");

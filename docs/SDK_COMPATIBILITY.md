@@ -44,7 +44,7 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 | Architecture | SpaceUI | 3 | Create space |
 | Common | ConstructionStages | 2 | Pending |
 | Common | CoordinateGridUI | 8 | Pending |
-| Common | MaterialLibraryUI | 5 | Pending |
+| Common | MaterialLibraryUI | 5 | 4 sample operations mapped; library listing added; remove-all intentionally omitted; live pending |
 | Common | ObjectLibraryUI | 8 | Pending |
 | Common | ProjectManager | 3 | Pending |
 | Common | ncBIMSmgd_sample | 1 | Pending |

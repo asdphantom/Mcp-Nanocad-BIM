@@ -42,11 +42,11 @@ The original sample source remains in the user-provided SDK archive.
 | Common | CoordinateGridUI | `nBIMSDK_ClearAxis` | Pending |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnMove` | Pending |
 | Common | CoordinateGridUI | `nBIMSDK_TestAxisOnOffset` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_GetUsedMaterials` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_GetProjectMaterials` | Pending |
+| Common | MaterialLibraryUI | `nBIMSDK_GetUsedMaterials` | API implemented; live pending |
+| Common | MaterialLibraryUI | `nBIMSDK_GetProjectMaterials` | API implemented; live pending |
 | Common | MaterialLibraryUI | `nBIMSDK_RemoveAllMaterials` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_AddLibraryMaterials` | Pending |
-| Common | MaterialLibraryUI | `nBIMSDK_AssignMaterial` | Pending |
+| Common | MaterialLibraryUI | `nBIMSDK_AddLibraryMaterials` | API implemented; live pending |
+| Common | MaterialLibraryUI | `nBIMSDK_AssignMaterial` | API implemented; live pending |
 | Common | ncBIMSmgd_sample | `nBIMSDK_objects_list` | Pending |
 | Common | ObjectLibraryUI | `NBIMSDK_ReadMetalwareProfiles` | Partial: `search_bim_library` |
 | Common | ObjectLibraryUI | `NBIMSDK_AddLibraryObject` | Pending |

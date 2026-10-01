@@ -2128,8 +2128,36 @@ TOOL_DEFS: list[dict[str, Any]] = [
     },
 ]
 
+TOOL_DEFS.extend([{'name': 'list_bim_library_materials',
+  'description': 'Read available native BIM materials from the component database.',
+  'properties': {'name': {'type': 'string', 'maxLength': 100},
+                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50}},
+  'required': []},
+ {'name': 'list_bim_project_materials',
+  'description': 'Read native materials stored in the active project.',
+  'properties': {'name': {'type': 'string', 'maxLength': 100},
+                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50}},
+  'required': []},
+ {'name': 'list_bim_used_materials',
+  'description': 'Read material IDs actually assigned to model-space native BIM entities; report '
+                 'unresolved IDs.',
+  'properties': {'name': {'type': 'string', 'maxLength': 100},
+                 'limit': {'type': 'integer', 'minimum': 1, 'maximum': 500, 'default': 50}},
+  'required': []},
+ {'name': 'add_bim_project_material',
+  'description': 'Add one exact library material ID to the active project; existing IDs are '
+                 'reused.',
+  'properties': {'material_id': {'type': 'string', 'minLength': 1, 'maxLength': 100}},
+  'required': ['material_id']},
+ {'name': 'assign_bim_material',
+  'description': 'Assign an existing project material to one native ParametricEntBase by handle. '
+                 'Add the project material first.',
+  'properties': {'material_id': {'type': 'string', 'minLength': 1, 'maxLength': 100},
+                 'handle': {'type': 'string', 'pattern': '^[0-9a-fA-F]+$'}},
+  'required': ['material_id', 'handle']}])
+
 # Verify count
-assert len(TOOL_DEFS) == 230, f"Expected 230 tools, got {len(TOOL_DEFS)}"
+assert len(TOOL_DEFS) == 235, f"Expected 235 tools, got {len(TOOL_DEFS)}"
 
 # ── Assign requires_mode to each tool definition ──────────────
 for td in TOOL_DEFS:

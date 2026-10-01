@@ -37,13 +37,13 @@ need multiple MCP tools or may be interactive and require redesign for automatio
 
 | Area | Sample group | Commands in SDK sample | Native MCP coverage |
 |---|---|---:|---|
-| Architecture | BuildingOpeningUI | 4 | Library window list and insertion |
+| Architecture | BuildingOpeningUI | 4 | List/insertion verified; mark read/copy/new implemented, live pending; series update pending |
 | Architecture | BuildingRoofUI | 12 | Create standard, dome, loft and sweep roofs |
-| Architecture | BuildingSlabUI | 4 | Create slab |
-| Architecture | BuildingWallUI | 2 | Create linear wall |
+| Architecture | BuildingSlabUI | 4 | Creation verified; add/cut/update contours implemented, live pending |
+| Architecture | BuildingWallUI | 2 | Creation verified; translation implemented, live pending |
 | Architecture | SpaceUI | 3 | Create space |
 | Common | ConstructionStages | 2 | Pending |
-| Common | CoordinateGridUI | 8 | Pending |
+| Common | CoordinateGridUI | 8 | List/create rectangular/circular, redistribute, assign/clear implemented, live pending; move/offset demos pending |
 | Common | MaterialLibraryUI | 5 | 4 sample operations mapped; library listing added; remove-all intentionally omitted; live pending |
 | Common | ObjectLibraryUI | 8 | Pending |
 | Common | ProjectManager | 3 | Pending |
@@ -83,3 +83,5 @@ before it can be marked compatible.
 ## SDK API additions 01.10.2026
 
 Ten grid, slab-contour and mark operations are implemented in [BIM_SDK_EXTENSIONS.md](BIM_SDK_EXTENSIONS.md). CoordinateGridUI creation/listing/redistribution/assignment/clearing and BuildingSlabUI contour edits are mapped; motion/offset demonstration commands remain pending. BuildingOpeningUI new-mark operation is mapped. Native live verification remains pending.
+
+Complete October 1 API update: [18 tools, examples and verification](API_UPDATE_2026-10-01.md).

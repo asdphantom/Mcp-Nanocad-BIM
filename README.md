@@ -335,3 +335,7 @@ Copy-Item engine\CadEngine.Plugin\bin\Release\CadEngine.Plugin.dll engine\dist\C
 Нативное редактирование: `shift_bim_wall`, `get_bim_window_mark`, `copy_bim_window_mark`. [Контракты](docs/BIM_EDIT.md).
 
 Десять операций SDK: [сетки осей, контуры плит и новые марки окон](docs/BIM_SDK_EXTENSIONS.md).
+
+## Обновление API 01.10.2026
+
+[18 новых функций, примеры вызовов и статус проверки](docs/API_UPDATE_2026-10-01.md).
